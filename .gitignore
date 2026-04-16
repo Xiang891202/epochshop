@@ -1,0 +1,17 @@
+﻿# 後端忽略
+epochshop-backend/target/
+epochshop-backend/.metadata/
+epochshop-backend/.vscode/
+epochshop-backend/.idea/
+epochshop-backend/*.log
+epochshop-backend/.mvn/wrapper/maven-wrapper.jar
+epochshop-backend/oracleJdk-26/
+
+# 前端忽略
+epochshop-frontend/node_modules/
+epochshop-frontend/dist/
+epochshop-frontend/.vscode/
+
+# 系統檔案
+.DS_Store
+Thumbs.db
