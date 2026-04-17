@@ -11,6 +11,8 @@ epochshop-backend/oracleJdk-26/
 epochshop-frontend/node_modules/
 epochshop-frontend/dist/
 epochshop-frontend/.vscode/
+epochshop-frontend/.env
+epochshop-frontend/.env.*
 
 # 系統檔案
 .DS_Store
