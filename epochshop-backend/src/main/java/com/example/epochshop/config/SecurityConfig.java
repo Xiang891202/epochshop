@@ -19,6 +19,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -61,13 +62,13 @@ public class SecurityConfig {
 
     // 內部靜態類別，必須放在 SecurityConfig 類別內部
     private static class JwtAuthenticationFilter extends OncePerRequestFilter {
-        private final JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
 
-        public JwtAuthenticationFilter(JwtUtil jwtUtil) {
-            this.jwtUtil = jwtUtil;
-        }
+    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
 
-        @Override
+    @Override
         protected void doFilterInternal(HttpServletRequest request,
                                         HttpServletResponse response,
                                         FilterChain filterChain) throws ServletException, IOException {
@@ -77,7 +78,11 @@ public class SecurityConfig {
                 if (jwtUtil.validateToken(token)) {
                     String username = jwtUtil.extractUsername(token);
                     UsernamePasswordAuthenticationToken auth =
-                            new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+                            new UsernamePasswordAuthenticationToken(
+                                username, 
+                                null, 
+                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                            );
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             }

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginView from '../views/LoginView.vue';
 import ProductsView from '../views/ProductsView.vue';
+import CartView from '../views/CartView.vue';
 
 const routes = [
   {
@@ -16,6 +17,12 @@ const routes = [
     path: '/products',
     name: 'Products',
     component: ProductsView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/cart',                               // ✅ 新增購物車路由
+    name: 'Cart',
+    component: CartView,
     meta: { requiresAuth: true },
   },
 ];
