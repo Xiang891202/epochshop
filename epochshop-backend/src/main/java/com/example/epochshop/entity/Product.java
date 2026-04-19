@@ -1,7 +1,13 @@
 package com.example.epochshop.entity;
 
-import jakarta.persistence.*;
 import java.math.BigDecimal;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "products")
@@ -24,4 +30,7 @@ public class Product {
     public void setPrice(BigDecimal price) { this.price = price; }
     public Integer getStock() { return stock; }
     public void setStock(Integer stock) { this.stock = stock; }
+
+    @Version
+    private Integer version;  // 用於樂觀鎖控制
 }

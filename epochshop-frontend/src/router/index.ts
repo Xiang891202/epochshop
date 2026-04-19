@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 import LoginView from '../views/LoginView.vue';
 import ProductsView from '../views/ProductsView.vue';
 import CartView from '../views/CartView.vue';
+import OrdersView from '../views/OrdersView.vue';
+// import { p } from 'vue-router/dist/router-CWoNjPRp.mjs';
 
 const routes = [
   {
@@ -23,6 +25,12 @@ const routes = [
     path: '/cart',                               // ✅ 新增購物車路由
     name: 'Cart',
     component: CartView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/orders',                              // ✅ 新增訂單歷史路由
+    name: 'Orders',
+    component: OrdersView,
     meta: { requiresAuth: true },
   },
 ];

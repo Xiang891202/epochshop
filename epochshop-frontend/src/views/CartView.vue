@@ -39,6 +39,9 @@
           </tr>
         </tfoot>
       </table>
+      <div class="checkout-section" v-if="cart.items.length > 0">
+        <button class="checkout-btn" @click="checkout">結帳</button>
+      </div>
     </div>
   </div>
 </template>
@@ -46,6 +49,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import axios from '../utils/axios';
+import router from '@/router';
 
 interface CartItem {
   itemId: number;
@@ -97,6 +101,18 @@ const removeItem = async (itemId: number) => {
   }
 };
 
+const checkout = async () => {
+  try {
+    const res = await axios.post('/orders');
+    alert('訂單建立成功！訂單編號：' + res.data.orderId);
+    router.push('/orders');
+  } catch (err: any) {
+    // 優先取用後端回傳的訊息，若無則顯示一般錯誤
+    const message = err.response?.data || err.message || '結帳失敗';
+    alert('結帳失敗：' + message);
+  }
+};
+
 onMounted(fetchCart);
 </script>
 
@@ -127,5 +143,19 @@ tfoot td {
 }
 input[type="number"] {
   width: 60px;
+}
+
+.checkout-section {
+  margin-top: 20px;
+  text-align: right;
+}
+.checkout-btn {
+  padding: 10px 30px;
+  font-size: 1.2rem;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 </style>

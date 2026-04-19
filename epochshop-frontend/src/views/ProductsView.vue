@@ -3,6 +3,7 @@
     <h1>🛒 瞬購秒殺商城 - 商品列表</h1>
     <div class="header-actions">
       <router-link to="/cart" class="cart-link">🛒 購物車</router-link>
+      <router-link to="/orders" class="orders-link">📋 我的訂單</router-link>
       <button @click="logout" class="logout-btn">登出</button>
     </div>
     <div v-if="loading">載入中...</div>
