@@ -15,7 +15,9 @@
         <small>庫存：{{ product.stock }}</small>
         <div class="product-actions">
           <input type="number" v-model="quantities[product.id]" min="1" :max="product.stock" />
-          <button @click="addToCart(product.id)">加入購物車</button>
+          <button @click="addToCart(product.id)" :disabled="adding[product.id]">
+            {{ adding[product.id] ? '加入中...' : '加入購物車' }}
+          </button>
         </div>
       </li>
     </ul>
@@ -40,6 +42,8 @@ const products = ref<Product[]>([]);
 const quantities = ref<Record<number, number>>({});
 const loading = ref(true);
 const error = ref<string | null>(null);
+// 在 <script setup> 中加入
+const adding = ref<Record<number, boolean>>({});
 
 onMounted(async () => {
   try {
@@ -54,12 +58,27 @@ onMounted(async () => {
 });
 
 const addToCart = async (productId: number) => {
+  if (adding.value[productId]) return; // 防止重複點擊
+
   const quantity = quantities.value[productId];
+  adding.value[productId] = true;
+
   try {
-    await axios.post('/cart/items', { productId, quantity });
+    // 1. 取得冪等 Token
+    const tokenRes = await axios.get('/cart/idempotent-token');
+    const idempotentKey = tokenRes.data.token;
+
+    // 2. 送出請求
+    await axios.post('/cart/items', {
+      productId,
+      quantity,
+      idempotentKey
+    });
     alert('加入購物車成功！');
   } catch (err: any) {
-    alert('加入購物車失敗：' + err.message);
+    alert('加入購物車失敗：' + (err.response?.data || err.message));
+  } finally {
+    adding.value[productId] = false;
   }
 };
 

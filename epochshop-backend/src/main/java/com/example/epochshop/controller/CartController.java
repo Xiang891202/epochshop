@@ -1,5 +1,8 @@
 package com.example.epochshop.controller;
 
+import java.util.UUID;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,14 +26,32 @@ import lombok.RequiredArgsConstructor;
 public class CartController {
     private final CartService cartService;
 
+    @GetMapping("/idempotent-token")
+    public ResponseEntity<Map<String, String>> getCartIdempotentToken() {
+        String token = UUID.randomUUID().toString();
+        return ResponseEntity.ok(Map.of("token", token));
+    }
+
     @GetMapping
     public ResponseEntity<CartResponse> getCart() {
         return ResponseEntity.ok(cartService.getCart());
     }
 
     @PostMapping("/items")
-    public ResponseEntity<CartResponse> addItem(@RequestBody CartItemRequest request) {
-        return ResponseEntity.ok(cartService.addItemToCart(request));
+    public ResponseEntity<CartResponse> addItem(@RequestBody Map<String, Object> payload) {
+        Long productId = Long.valueOf(payload.get("productId").toString());
+        Integer quantity = (Integer) payload.get("quantity");
+        String idempotentKey = (String) payload.get("idempotentKey");
+
+        if (idempotentKey == null || idempotentKey.isEmpty()) {
+            throw new RuntimeException("缺少冪等金鑰");
+        }
+
+        CartItemRequest request = new CartItemRequest();
+        request.setProductId(productId);
+        request.setQuantity(quantity);
+
+        return ResponseEntity.ok(cartService.addItemToCart(request, idempotentKey));
     }
 
     @PutMapping("/items/{itemId}")

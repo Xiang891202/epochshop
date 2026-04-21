@@ -45,13 +45,17 @@ public class CartService {
     }
 
     @Transactional
-    public CartResponse addItemToCart(CartItemRequest request) {
+    public CartResponse addItemToCart(CartItemRequest request, String idempotentKey) {
+        // 1. 檢查冪等鍵是否已存在
+        if (cartItemRepository.existsByIdempotentKey(idempotentKey)) {
+            return getCart();  // 已處理過，直接返回當前購物車內容
+        }
+
         User user = getCurrentUser();
         Cart cart = getOrCreateCart(user);
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        // 檢查購物車中是否已有該商品
         Optional<CartItem> existingItem = cart.getItems().stream()
                 .filter(item -> item.getProduct().getId().equals(product.getId()))
                 .findFirst();
@@ -59,13 +63,16 @@ public class CartService {
         if (existingItem.isPresent()) {
             CartItem item = existingItem.get();
             item.setQuantity(item.getQuantity() + request.getQuantity());
+            cartItemRepository.save(item);
         } else {
             CartItem newItem = new CartItem();
             newItem.setCart(cart);
             newItem.setProduct(product);
             newItem.setQuantity(request.getQuantity());
             newItem.setUnitPrice(product.getPrice());
+            newItem.setIdempotentKey(idempotentKey);  // ✅ 寫入冪等鍵
             cart.getItems().add(newItem);
+            cartItemRepository.save(newItem);
         }
 
         cartRepository.save(cart);

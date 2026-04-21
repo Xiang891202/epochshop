@@ -2,6 +2,7 @@ package com.example.epochshop.entity;
 
 import java.math.BigDecimal;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -15,7 +16,8 @@ import lombok.Data;
 
 @Entity
 @Table(name = "cart_items", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"cart_id", "product_id"})
+    @UniqueConstraint(columnNames = {"cart_id", "product_id"}),
+    @UniqueConstraint(columnNames = {"idempotent_key"})  // ✅ 新增冪等鍵唯一約束
 })
 @Data
 public class CartItem {
@@ -35,4 +37,7 @@ public class CartItem {
 
     // 儲存加入時的單價，避免後續商品變價影響歷史資料
     private BigDecimal unitPrice;
+
+    @Column(name = "idempotent_key", unique = true, length = 36)  // ✅ 新增欄位
+    private String idempotentKey;
 }

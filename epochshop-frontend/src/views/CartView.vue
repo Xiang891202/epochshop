@@ -40,7 +40,9 @@
         </tfoot>
       </table>
       <div class="checkout-section" v-if="cart.items.length > 0">
-        <button class="checkout-btn" @click="checkout">結帳</button>
+        <button class="checkout-btn" @click="checkout">
+          {{ checkingOut ? '處理中...' : '結帳' }}
+        </button>
       </div>
     </div>
   </div>
@@ -69,6 +71,7 @@ interface Cart {
 const cart = ref<Cart>({ cartId: 0, items: [], totalAmount: 0 });
 const loading = ref(true);
 const error = ref<string | null>(null);
+const checkingOut = ref(false);
 
 const fetchCart = async () => {
   try {
@@ -102,14 +105,28 @@ const removeItem = async (itemId: number) => {
 };
 
 const checkout = async () => {
+  console.log('開始結帳');
+  if (checkingOut.value) return; //防止重複訂單
+  checkingOut.value = true;
   try {
-    const res = await axios.post('/orders');
+    // 1. 取得冪等 Token
+    const tokenRes = await axios.get('/orders/idempotent-token');
+    const idempotentKey = tokenRes.data.token;
+    console.log('取得 Token:', idempotentKey);
+
+
+    // 2. 送出結帳請求
+    console.log('準備送出 POST /orders');
+    const res = await axios.post('/orders', { idempotentKey: idempotentKey });
+    console.log('訂單建立成功', res.data);
     alert('訂單建立成功！訂單編號：' + res.data.orderId);
     router.push('/orders');
   } catch (err: any) {
-    // 優先取用後端回傳的訊息，若無則顯示一般錯誤
+    console.error('結帳失敗:', err);
     const message = err.response?.data || err.message || '結帳失敗';
     alert('結帳失敗：' + message);
+  } finally {
+    checkingOut.value = false;
   }
 };
 

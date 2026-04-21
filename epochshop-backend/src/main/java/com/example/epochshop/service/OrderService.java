@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.epochshop.dto.OrderResponse;
@@ -19,6 +20,7 @@ import com.example.epochshop.repository.CartRepository;
 import com.example.epochshop.repository.OrderRepository;
 import com.example.epochshop.repository.ProductRepository;
 import com.example.epochshop.repository.UserRepository;
+
 
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +39,18 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    public OrderResponse createOrder() {
+
+    
+
+    @Transactional(rollbackFor = Exception.class, isolation = Isolation.READ_COMMITTED)
+    public OrderResponse createOrder(String idempotentKey) {
+
+
+        // 1.检查幂等键是否已存在
+        if (orderRepository.existsByIdempotentKey(idempotentKey)) {
+            throw new RuntimeException("訂單處理中，請勿重複提交");
+        }
+
         User user = getCurrentUser();
         Cart cart = cartRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("購物車是空的"));
@@ -47,11 +59,15 @@ public class OrderService {
             throw new RuntimeException("購物車是空的");
         }
 
-        // 建立訂單
+        // 2.建立訂單
         Order order = new Order();
         order.setUser(user);
+        order.setIdempotentKey(idempotentKey);
 
-        // 扣庫存並建立明細
+        // 3. 先保存订单，让数据库立即分配 ID 并写入幂等键（此时唯一约束生效）
+        order = orderRepository.save(order);
+
+        // 4.扣庫存並建立明細
         for (CartItem cartItem : cart.getItems()) {
             Product product = cartItem.getProduct();
             int quantity = cartItem.getQuantity();
@@ -77,7 +93,7 @@ public class OrderService {
             order.getItems().add(orderItem);
         }
 
-        // 計算總金額
+        // 5.計算總金額更新訂單
         BigDecimal total = order.getItems().stream()
                 .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -85,7 +101,7 @@ public class OrderService {
 
         orderRepository.save(order);
 
-        // 清空購物車
+        // 6.清空購物車
         cart.getItems().clear();
         cartRepository.save(cart);
 
