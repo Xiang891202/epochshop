@@ -6,6 +6,12 @@
       <router-link to="/orders" class="orders-link">📋 我的訂單</router-link>
       <button @click="logout" class="logout-btn">登出</button>
     </div>
+
+    <!-- 搜尋框 -->
+    <div class="search-bar">
+      <input v-model="searchKeyword" placeholder="搜尋商品..." @input="debouncedSearch" />
+    </div>
+
     <div v-if="loading">載入中...</div>
     <div v-else-if="error">發生錯誤：{{ error }}</div>
     <ul v-else>
@@ -21,13 +27,21 @@
         </div>
       </li>
     </ul>
+
+    <!-- 分頁元件 -->
+    <div class="pagination" v-if="totalPages > 1">
+      <button @click="changePage(currentPage - 1)" :disabled="currentPage === 0">上一頁</button>
+      <span>第 {{ currentPage + 1 }} / {{ totalPages }} 頁</span>
+      <button @click="changePage(currentPage + 1)" :disabled="currentPage >= totalPages - 1">下一頁</button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import axios from '../utils/axios';
 import { useRouter } from 'vue-router';
+import { debounce } from 'lodash-es';
 
 interface Product {
   id: number;
@@ -40,40 +54,57 @@ interface Product {
 const router = useRouter();
 const products = ref<Product[]>([]);
 const quantities = ref<Record<number, number>>({});
+const adding = ref<Record<number, boolean>>({});
 const loading = ref(true);
 const error = ref<string | null>(null);
-// 在 <script setup> 中加入
-const adding = ref<Record<number, boolean>>({});
 
-onMounted(async () => {
+const searchKeyword = ref('');
+const currentPage = ref(0);
+const pageSize = 5;
+const totalPages = ref(0);
+
+const fetchProducts = async () => {
+  loading.value = true;
   try {
-    const res = await axios.get('/products');
-    products.value = res.data;
-    products.value.forEach(p => quantities.value[p.id] = 1);
+    const res = await axios.get('/products', {
+      params: {
+        keyword: searchKeyword.value || undefined,
+        page: currentPage.value,
+        size: pageSize,
+        sort: 'id,desc'
+      }
+    });
+    products.value = res.data.content;
+    totalPages.value = res.data.totalPages;
+    products.value.forEach(p => {
+      if (!quantities.value[p.id]) quantities.value[p.id] = 1;
+      if (!adding.value[p.id]) adding.value[p.id] = false;
+    });
   } catch (err: any) {
     error.value = err.message;
   } finally {
     loading.value = false;
   }
-});
+};
+
+const debouncedSearch = debounce(() => {
+  currentPage.value = 0;
+  fetchProducts();
+}, 500);
+
+const changePage = (page: number) => {
+  currentPage.value = page;
+  fetchProducts();
+};
 
 const addToCart = async (productId: number) => {
-  if (adding.value[productId]) return; // 防止重複點擊
-
+  if (adding.value[productId]) return;
   const quantity = quantities.value[productId];
   adding.value[productId] = true;
-
   try {
-    // 1. 取得冪等 Token
     const tokenRes = await axios.get('/cart/idempotent-token');
     const idempotentKey = tokenRes.data.token;
-
-    // 2. 送出請求
-    await axios.post('/cart/items', {
-      productId,
-      quantity,
-      idempotentKey
-    });
+    await axios.post('/cart/items', { productId, quantity, idempotentKey });
     alert('加入購物車成功！');
   } catch (err: any) {
     alert('加入購物車失敗：' + (err.response?.data || err.message));
@@ -86,40 +117,19 @@ const logout = () => {
   localStorage.removeItem('token');
   router.push('/login');
 };
+
+onMounted(fetchProducts);
+watch(currentPage, fetchProducts);
 </script>
 
 <style scoped>
-.products-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-}
-.header-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-.cart-link {
-  text-decoration: none;
-  font-size: 1.2rem;
-  padding: 5px 10px;
-  background: #f0f0f0;
-  border-radius: 5px;
-}
-.logout-btn {
-  padding: 5px 10px;
-}
-.product-actions {
-  margin-top: 10px;
-}
-.product-actions input {
-  width: 60px;
-  margin-right: 10px;
-}
-li {
-  margin-bottom: 20px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 10px;
-  list-style: none;
-}
+.products-container { max-width: 800px; margin: 0 auto; padding: 20px; }
+.header-actions { display: flex; justify-content: flex-end; gap: 15px; margin-bottom: 20px; }
+.search-bar { margin-bottom: 20px; }
+.search-bar input { width: 100%; padding: 8px; font-size: 1rem; }
+li { margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; list-style: none; }
+.product-actions { margin-top: 10px; }
+.product-actions input { width: 60px; margin-right: 10px; }
+.pagination { display: flex; justify-content: center; gap: 20px; margin-top: 30px; }
+.pagination button { padding: 5px 15px; }
 </style>

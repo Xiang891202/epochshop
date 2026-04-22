@@ -1,42 +1,51 @@
-# vue-ecom-frontend
+## 📄 前端 `README.md`（替换 `epochshop-frontend/README.md`）
 
-This template should help get you started developing with Vue 3 in Vite.
+```markdown
+# EpochShop Frontend
 
-## Recommended IDE Setup
+Vue 3 + TypeScript 前端应用，提供商品浏览、购物车、订单管理等介面。
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## 技术栈
+- Vue 3（Composition API）
+- TypeScript
+- Vite
+- Vue Router
+- Axios
+- lodash-es
 
-## Recommended Browser Setup
+## 快速启动
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
+### 安装依赖
+```bash
 npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
+开发模式
+bash
 npm run dev
-```
+预设运行于 http://localhost:5173
 
-### Type-Check, Compile and Minify for Production
-
-```sh
+生产建置
+bash
 npm run build
-```
+环境变量
+后端 API 位址可透过 .env 档案设定：
+
+text
+VITE_API_BASE_URL=http://localhost:8080/api
+项目结构
+text
+src/
+├── views/           # 页面组件（Login、Products、Cart、Orders）
+├── router/          # 路由与守卫
+├── utils/           # Axios 拦截器
+├── App.vue
+└── main.ts
+主要功能
+使用者登入 / 注册
+
+商品列表（分页、关键字搜寻）
+
+购物车管理（加入、修改数量、删除）
+
+订单结帐与模拟付款
+
+路由守卫与 JWT 自动附加
