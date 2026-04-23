@@ -42,5 +42,5 @@ jobs:
       # 單元測試暫時跳過（Vitest 與 Node 18 環境相容性問題）
       # - name: Run unit tests
       #   run: npm run test
-      - name: Build
+      - name: Build (skip type-check)
         run: npm run build
