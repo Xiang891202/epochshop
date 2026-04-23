@@ -116,21 +116,15 @@ possible_keys 已顯示 idx_order_items_order_id
 
 📌 開發里程碑
 v0.1.0：商品 API 與前端串接
-
 v0.2.0：JWT 使用者認證
-
 v0.3.0：購物車模組
-
 v0.4.0：訂單管理與庫存樂觀鎖
-
 v0.5.0：冪等性處理與 SQL 優化案例
-
 v0.6.0：Swagger API 文件、商品分頁搜尋、Docker 化準備
+v0.7.0：單元測試導入與 CI/CD 流程
 
 📝 待辦事項
-單元測試與整合測試（JUnit + Mockito + Vitest）
-
-CI/CD 流程規劃（GitHub Actions）
+（無，專案已完成所有預定功能與加分項）
 
 ⚠️ 注意事項
 敏感資訊（資料庫密碼、JWT Secret）已透過環境變數管理，請勿將 .env 或 application.properties 中的明碼提交至公開倉庫。
