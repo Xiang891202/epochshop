@@ -34,7 +34,7 @@ text
 
 | 模組 | 功能說明 | 技術亮點 |
 |------|----------|----------|
-| 🔐 使用者認證 | 註冊 / 登入，JWT 驗證 | Spring Security + BCrypt |
+| 🔐 使用者認證 | 註冊 / 登入，JWT 驗證，角色區分（買家/管理員） | Spring Security + BCrypt |
 | 🛍️ 商品瀏覽 | 商品列表查詢、分頁、關鍵字搜尋 | JPA + Pageable + 模糊查詢 |
 | 🛒 購物車 | 加入商品、修改數量、刪除品項 | MySQL 關聯儲存，自動關聯用戶，加入冪等性防重複 |
 | 📦 訂單管理 | 從購物車建立訂單、模擬付款 | 交易管理、樂觀鎖（@Version）防止超賣 |
@@ -43,6 +43,7 @@ text
 | 📈 SQL 優化案例 | 訂單列表 JOIN 查詢效能調校 | EXPLAIN 分析、索引建立、優化前後對比 |
 | 📚 Swagger API 文件 | 自動生成 API 文件與測試介面 | SpringDoc OpenAPI + JWT 授權 |
 | 🐳 Docker 化 | 前後端容器化，支援一鍵部署 | Dockerfile + docker-compose（連接雲端 MySQL） |
+| ⚙️ 管理後台 | 管理員可新增、編輯、下架（軟刪除）商品，角色權限控管 | Vue AdminView + @PreAuthorize + 商品 active 欄位 |
 | 🎨 前端整合 | Vue 3 + TypeScript + Axios | 路由守衛、Token 自動附加、錯誤攔截、Loading 防連點、分頁搜尋 |
 
 ## ⚙️ 技術棧
@@ -75,11 +76,19 @@ bash
 # 複製 .env.example 為 .env 並填入真實 Railway MySQL 密碼
 cp .env.example .env
 docker-compose up --build
+
 📡 API 端點摘要
 方法	路徑	說明
 POST	/api/auth/register	註冊
 POST	/api/auth/login	登入
+GET	/api/auth/me	取得目前使用者資訊（含角色）
 GET	/api/products	商品列表（支援分頁與關鍵字 ?keyword=xxx&page=0&size=10）
+POST	/api/products	新增商品
+PUT	/api/products/{id}	更新商品
+DELETE	/api/products/{id}	刪除商品（軟刪除，改為下架）
+PUT	/api/products/{id}/deactivate	下架商品（管理員）
+PUT	/api/products/{id}/reactivate	恢復上架（管理員）
+GET	/api/products/admin	管理員專用商品列表（含已下架）
 GET	/api/cart	查詢購物車
 GET	/api/cart/idempotent-token	取得購物車冪等 Token
 POST	/api/cart/items	加入購物車（需冪等 Token）
@@ -89,6 +98,7 @@ GET	/api/orders/idempotent-token	取得訂單冪等 Token
 POST	/api/orders	結帳建立訂單（需冪等 Token）
 GET	/api/orders	查詢訂單
 PUT	/api/orders/{id}/pay	模擬付款
+
 📈 效能優化案例：訂單列表查詢
 問題描述
 查詢特定用戶的訂單及其明細時，由於 order_items 表缺少對 order_id 的索引，導致查詢時產生全表掃描，當資料量增長時效能將急遽下降。
@@ -104,6 +114,7 @@ orders 表：type=eq_ref，使用 PRIMARY 索引
 sql
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
+
 優化後執行計畫（EXPLAIN）
 order_items 表：type=ALL（因資料量過小，優化器未選用索引）
 
@@ -122,9 +133,16 @@ v0.4.0：訂單管理與庫存樂觀鎖
 v0.5.0：冪等性處理與 SQL 優化案例
 v0.6.0：Swagger API 文件、商品分頁搜尋、Docker 化準備
 v0.7.0：單元測試導入與 CI/CD 流程
+v0.8.0：管理員 UI、商品軟刪除 (新增功能有導入元件測試)
+與角色權限管理
 
 📝 待辦事項
-（無，專案已完成所有預定功能與加分項）
+業師規定完成項目
+
+- ✅ 賣家UI介面 （編輯新增軟刪除）
+- ⬜ 商品圖片功能新增
+- ⬜ 賣家銷售額
+- ⬜ 客戶對賣家聊天視窗
 
 ⚠️ 注意事項
 敏感資訊（資料庫密碼、JWT Secret）已透過環境變數管理，請勿將 .env 或 application.properties 中的明碼提交至公開倉庫。
