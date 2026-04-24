@@ -4,6 +4,7 @@
     <div class="header-actions">
       <router-link to="/cart" class="cart-link">🛒 購物車</router-link>
       <router-link to="/orders" class="orders-link">📋 我的訂單</router-link>
+      <router-link v-if="isAdmin" to="/admin" class="admin-link">⚙️ 管理</router-link>
       <button @click="logout" class="logout-btn">登出</button>
     </div>
 
@@ -38,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import axios from '../utils/axios';
 import { useRouter } from 'vue-router';
 import { debounce } from 'lodash-es';
@@ -62,6 +63,8 @@ const searchKeyword = ref('');
 const currentPage = ref(0);
 const pageSize = 5;
 const totalPages = ref(0);
+
+const isAdmin = computed(() => localStorage.getItem('role') === 'ROLE_ADMIN');
 
 const fetchProducts = async () => {
   loading.value = true;

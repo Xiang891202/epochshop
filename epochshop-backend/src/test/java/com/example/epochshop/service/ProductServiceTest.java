@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -75,5 +76,35 @@ class ProductServiceTest {
 
         assertThat(saved).isEqualTo(product);
         verify(productRepository, times(1)).save(product);
+    }
+
+    @Test
+    void deactivateProduct_ShouldSetActiveFalse() {
+        Product existing = new Product();
+        existing.setId(1L);
+        existing.setActive(true);
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(productRepository.save(any(Product.class))).thenReturn(existing);
+
+        productService.deactivateProduct(1L);
+
+        assertThat(existing.getActive()).isFalse();
+        verify(productRepository).save(existing);
+    }
+
+    @Test
+    void reactivateProduct_ShouldSetActiveTrue() {
+        Product existing = new Product();
+        existing.setId(2L);
+        existing.setActive(false);
+
+        when(productRepository.findById(2L)).thenReturn(Optional.of(existing));
+        when(productRepository.save(any(Product.class))).thenReturn(existing);
+
+        productService.reactivateProduct(2L);
+
+        assertThat(existing.getActive()).isTrue();
+        verify(productRepository).save(existing);
     }
 }

@@ -1,13 +1,22 @@
 package com.example.epochshop.controller;
 
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.example.epochshop.entity.User;
 import com.example.epochshop.repository.UserRepository;
 import com.example.epochshop.util.JwtUtil;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -29,9 +38,10 @@ public class AuthController {
         User user = new User();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
+        user.setRole("ROLE_USER"); // 預設為買家
         userRepository.save(user);
 
-        String token = jwtUtil.generateToken(username);
+        String token = jwtUtil.generateToken(username, "ROLE_USER");
         return ResponseEntity.ok(Map.of("token", token));
     }
 
@@ -47,7 +57,19 @@ public class AuthController {
             throw new RuntimeException("Invalid credentials");
         }
 
-        String token = jwtUtil.generateToken(username);
+        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
         return ResponseEntity.ok(Map.of("token", token));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(Map.of(
+            "username", user.getUsername(),
+            "role", user.getRole()
+        ));
     }
 }

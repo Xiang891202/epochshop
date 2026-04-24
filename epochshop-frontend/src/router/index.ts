@@ -3,6 +3,7 @@ import LoginView from '../views/LoginView.vue';
 import ProductsView from '../views/ProductsView.vue';
 import CartView from '../views/CartView.vue';
 import OrdersView from '../views/OrdersView.vue';
+import AdminView from '../views/AdminView.vue';
 // import { p } from 'vue-router/dist/router-CWoNjPRp.mjs';
 
 const routes = [
@@ -33,6 +34,12 @@ const routes = [
     component: OrdersView,
     meta: { requiresAuth: true },
   },
+  {
+    path: '/admin',                                // ✅ 新增管理員路由
+    name: 'Admin',
+    component: AdminView,
+    meta: { requiresAuth: true, requiresAdmin: true },
+  }
 ];
 
 const router = createRouter({
@@ -43,13 +50,26 @@ const router = createRouter({
 // 路由守衛：未登入時導向登入頁
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
+
+  // 需要管理員權限，但沒有 token 或 role 不符 → 踢回商品頁
+  if (to.meta.requiresAdmin && (!token || role !== 'ROLE_ADMIN')) {
+    next('/products');
+    return;
+  }
+
+  // 需要登入但沒有 token → 回登入頁
   if (to.meta.requiresAuth && !token) {
     next('/login');
-  } else if (to.path === '/login' && token) {
-    next('/products'); // 已登入者訪問登入頁直接導向商品頁
-  } else {
-    next();
+    return;
   }
-});
 
+  // 已登入卻想去登入頁 → 直接到商品頁
+  if (to.path === '/login' && token) {
+    next('/products');
+    return;
+  }
+
+  next();
+});
 export default router;

@@ -3,10 +3,12 @@ package com.example.epochshop.config;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -29,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -63,15 +66,14 @@ public class SecurityConfig {
         return source;
     }
 
-    // 內部靜態類別，必須放在 SecurityConfig 類別內部
     private static class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtUtil jwtUtil;
+        private final JwtUtil jwtUtil;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
-    }
+        public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+            this.jwtUtil = jwtUtil;
+        }
 
-    @Override
+        @Override
         protected void doFilterInternal(HttpServletRequest request,
                                         HttpServletResponse response,
                                         FilterChain filterChain) throws ServletException, IOException {
@@ -80,12 +82,11 @@ public class SecurityConfig {
                 String token = header.substring(7);
                 if (jwtUtil.validateToken(token)) {
                     String username = jwtUtil.extractUsername(token);
+                    String role = jwtUtil.extractRole(token);
+                    List<SimpleGrantedAuthority> authorities = Collections.singletonList(
+                            new SimpleGrantedAuthority(role));
                     UsernamePasswordAuthenticationToken auth =
-                            new UsernamePasswordAuthenticationToken(
-                                username, 
-                                null, 
-                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
-                            );
+                            new UsernamePasswordAuthenticationToken(username, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             }

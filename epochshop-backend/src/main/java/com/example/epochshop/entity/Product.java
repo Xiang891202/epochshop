@@ -3,6 +3,7 @@ package com.example.epochshop.entity;
 import java.math.BigDecimal;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -37,5 +38,7 @@ public class Product {
     @Schema(description = "樂觀鎖版本號", accessMode = Schema.AccessMode.READ_ONLY)
     private Integer version;
 
-    // Getter / Setter 保持不變（此處省略，請保留原有的即可）
+    // ✅ 新增：商品狀態（true=上架, false=下架）
+    @Column(nullable = false)
+    private Boolean active = true;
 }

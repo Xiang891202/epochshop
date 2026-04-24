@@ -23,10 +23,11 @@ instance.interceptors.request.use(
 instance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
       localStorage.removeItem('token');
+      localStorage.removeItem('role');   // ← 可能你之前没有删除 role，导致 role 残留
       window.location.href = '/login';
-    }
+  }
     return Promise.reject(error);
   }
 );

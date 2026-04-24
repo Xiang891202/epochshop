@@ -23,4 +23,6 @@ public class User {
     private String password;
 
     // 可擴充 email, role 等欄位
+    @Column(nullable = false)
+    private String role = "ROLE_USER"; 
 }
