@@ -75,4 +75,48 @@ describe('AdminView.vue', () => {
     await addBtn.trigger('click');
     expect(wrapper.text()).toContain('新增商品');
   });
+
+  it('上傳圖片應更新 imageUrl 與預覽', async () => {
+  // 先讓表單顯示，否則 input 不存在
+  const addBtn = wrapper.find('.admin-actions button');
+  await addBtn.trigger('click');
+  await wrapper.vm.$nextTick();
+
+  const file = new File(['dummy content'], 'example.png', { type: 'image/png' });
+  (axios.post as any).mockResolvedValueOnce({
+    data: { imageUrl: 'http://localhost:8080/uploads/example.png' }
+  });
+
+  // 找到 input[type="file"]
+  const input = wrapper.find('input[type="file"]');
+  // 模擬 files
+  Object.defineProperty(input.element, 'files', { value: [file] });
+  await input.trigger('change');
+  await flushPromises();
+
+  expect(axios.post).toHaveBeenCalledWith('/upload/image', expect.any(FormData), expect.any(Object));
+  // 確認 form.imageUrl 與 imagePreview 被設定
+  expect(wrapper.vm.form.imageUrl).toBe('http://localhost:8080/uploads/example.png');
+  expect(wrapper.vm.imagePreview).toBe('http://localhost:8080/uploads/example.png');
+  expect(wrapper.find('.image-preview').exists()).toBe(true);
+  });
+
+  it('移除圖片應清空 imageUrl 與預覽', async () => {
+    // 先讓表單顯示
+    const addBtn = wrapper.find('.admin-actions button');
+    await addBtn.trigger('click');
+    await wrapper.vm.$nextTick();
+
+    // 直接設定 vm 的響應式屬性（放到同一個 nextTick 中）
+    wrapper.vm.form.imageUrl = 'http://localhost:8080/uploads/example.png';
+    wrapper.vm.imagePreview = 'http://localhost:8080/uploads/example.png';
+    await wrapper.vm.$nextTick();
+
+    const removeBtn = wrapper.find('.btn-remove');
+    await removeBtn.trigger('click');
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.vm.form.imageUrl).toBe('');
+    expect(wrapper.vm.imagePreview).toBe('');
+  });
 });

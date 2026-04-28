@@ -20,23 +20,30 @@ import com.example.epochshop.service.CartService;
 
 import lombok.RequiredArgsConstructor;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/cart")
 @RequiredArgsConstructor
+@Tag(name = "購物車管理", description = "購物車 CRUD 與冪等 Token API")
 public class CartController {
     private final CartService cartService;
 
+    @Operation(summary = "取得購物車冪等 Token")
     @GetMapping("/idempotent-token")
     public ResponseEntity<Map<String, String>> getCartIdempotentToken() {
         String token = UUID.randomUUID().toString();
         return ResponseEntity.ok(Map.of("token", token));
     }
 
+    @Operation(summary = "查詢購物車內容")
     @GetMapping
     public ResponseEntity<CartResponse> getCart() {
         return ResponseEntity.ok(cartService.getCart());
     }
 
+     @Operation(summary = "加入商品至購物車（需冪等 Token）")
     @PostMapping("/items")
     public ResponseEntity<CartResponse> addItem(@RequestBody Map<String, Object> payload) {
         Long productId = Long.valueOf(payload.get("productId").toString());
@@ -54,12 +61,14 @@ public class CartController {
         return ResponseEntity.ok(cartService.addItemToCart(request, idempotentKey));
     }
 
+    @Operation(summary = "更新購物車商品數量")
     @PutMapping("/items/{itemId}")
     public ResponseEntity<CartResponse> updateItem(@PathVariable Long itemId,
                                                    @RequestParam Integer quantity) {
         return ResponseEntity.ok(cartService.updateItemQuantity(itemId, quantity));
     }
 
+    @Operation(summary = "刪除購物車品項")
     @DeleteMapping("/items/{itemId}")
     public ResponseEntity<CartResponse> removeItem(@PathVariable Long itemId) {
         return ResponseEntity.ok(cartService.removeItem(itemId));

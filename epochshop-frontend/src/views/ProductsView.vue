@@ -2,9 +2,18 @@
   <div class="products-container">
     <h1>🛒 瞬購秒殺商城 - 商品列表</h1>
     <div class="header-actions">
-      <router-link to="/cart" class="cart-link">🛒 購物車</router-link>
-      <router-link to="/orders" class="orders-link">📋 我的訂單</router-link>
-      <router-link v-if="isAdmin" to="/admin" class="admin-link">⚙️ 管理</router-link>
+      <!-- 客戶端導覽列 -->
+      <template v-if="!isAdmin">
+        <router-link to="/cart" class="cart-link">🛒 購物車</router-link>
+        <router-link to="/orders" class="orders-link">📋 我的訂單</router-link>
+      </template>
+
+      <!-- 管理員導覽列 -->
+      <template v-else>
+        <router-link to="/admin" class="admin-link">⚙️ 管理</router-link>
+        <router-link to="/admin/sales" class="sales-link">💰 銷售額</router-link>
+      </template>
+
       <button @click="logout" class="logout-btn">登出</button>
     </div>
 
@@ -16,17 +25,23 @@
     <div v-if="loading">載入中...</div>
     <div v-else-if="error">發生錯誤：{{ error }}</div>
     <ul v-else>
-      <li v-for="product in products" :key="product.id">
+      <li v-for="product in products" :key="product.id" class="product-item">
+      <div class="product-image">
+        <img v-if="product.imageUrl" :src="product.imageUrl" alt="商品图片" />
+        <div v-else class="no-image">暂无图片</div>
+      </div>
+      <div class="product-info">
         <strong>{{ product.name }}</strong> - ${{ product.price }}
         <p>{{ product.description }}</p>
-        <small>庫存：{{ product.stock }}</small>
+        <small>库存：{{ product.stock }}</small>
         <div class="product-actions">
           <input type="number" v-model="quantities[product.id]" min="1" :max="product.stock" />
           <button @click="addToCart(product.id)" :disabled="adding[product.id]">
-            {{ adding[product.id] ? '加入中...' : '加入購物車' }}
+            {{ adding[product.id] ? '加入中...' : '加入购物车' }}
           </button>
         </div>
-      </li>
+      </div>
+    </li>
     </ul>
 
     <!-- 分頁元件 -->
@@ -135,4 +150,57 @@ li { margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; l
 .product-actions input { width: 60px; margin-right: 10px; }
 .pagination { display: flex; justify-content: center; gap: 20px; margin-top: 30px; }
 .pagination button { padding: 5px 15px; }
+
+.product-item {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 20px;
+  list-style: none;
+}
+
+.product-image {
+  flex-shrink: 0;
+  width: 150px;
+  height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-image {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.product-info {
+  flex: 1;
+}
+
+.product-actions {
+  margin-top: 10px;
+}
+.product-actions input {
+  width: 60px;
+  margin-right: 10px;
+}
+
+.sales-link {
+  text-decoration: none;
+  font-size: 1rem;
+  padding: 5px 10px;
+  background: #4CAF50;
+  color: white;
+  border-radius: 5px;
+}
 </style>

@@ -34,6 +34,10 @@ public class Product {
     @Schema(description = "庫存數量", example = "10")
     private Integer stock;
 
+    @Column(length = 500)
+    @Schema(description = "商品圖片網址")
+    private String imageUrl;
+
     @Version
     @Schema(description = "樂觀鎖版本號", accessMode = Schema.AccessMode.READ_ONLY)
     private Integer version;

@@ -17,7 +17,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("EpochShop API")
-                        .version("v0.5.0")
+                        .version("v0.9.2")
                         .description("瞬購秒殺商城 REST API 文件"))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()

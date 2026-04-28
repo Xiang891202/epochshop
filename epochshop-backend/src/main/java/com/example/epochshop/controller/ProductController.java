@@ -47,6 +47,7 @@ public class ProductController {
         return productService.updateProduct(id, product);
     }
 
+    @Operation(summary = "下架商品（管理員）")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/deactivate")
     public ResponseEntity<Void> deactivateProduct(@PathVariable Long id) {
@@ -54,6 +55,7 @@ public class ProductController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "恢復商品上架（管理員）")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/reactivate")
     public ResponseEntity<Void> reactivateProduct(@PathVariable Long id) {
@@ -61,6 +63,7 @@ public class ProductController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "管理員商品列表（含已下架）")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin")
     public Page<Product> getAllProductsForAdmin(

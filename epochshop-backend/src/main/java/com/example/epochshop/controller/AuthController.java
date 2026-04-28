@@ -18,14 +18,19 @@ import com.example.epochshop.util.JwtUtil;
 
 import lombok.RequiredArgsConstructor;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(name = "使用者認證", description = "註冊、登入與使用者資訊 API")
 public class AuthController {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
+    @Operation(summary = "註冊新使用者")
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Map<String, String> payload) {
         String username = payload.get("username");
@@ -45,6 +50,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("token", token));
     }
 
+    @Operation(summary = "使用者登入")
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> payload) {
         String username = payload.get("username");
@@ -61,6 +67,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("token", token));
     }
 
+    @Operation(summary = "取得目前使用者資訊")
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
