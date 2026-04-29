@@ -39,12 +39,16 @@ const handleSubmit = async () => {
     });
     localStorage.setItem('token', res.data.token);
 
-    // 1. 取得角色
+    // 取得角色
     const meRes = await axios.get('/auth/me');
     localStorage.setItem('role', meRes.data.role);
 
-    // 2. 角色儲存完成後再跳轉
-    router.push('/products');
+    // 根據角色跳轉
+    if (meRes.data.role === 'ROLE_ADMIN') {
+      router.push('/admin');
+    } else {
+      router.push('/products');
+    }
   } catch (err: any) {
     error.value = err.response?.data || '操作失敗';
   }

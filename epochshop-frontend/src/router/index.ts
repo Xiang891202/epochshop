@@ -4,6 +4,8 @@ import ProductsView from '../views/ProductsView.vue';
 import CartView from '../views/CartView.vue';
 import OrdersView from '../views/OrdersView.vue';
 import AdminView from '../views/AdminView.vue';
+import SalesView from '../views/SalesView.vue';
+import AdminLayout from '../views/layout/AdminLayout.vue';
 // import { p } from 'vue-router/dist/router-CWoNjPRp.mjs';
 
 const routes = [
@@ -35,11 +37,20 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/admin',                                // ✅ 新增管理員路由
-    name: 'Admin',
-    component: AdminView,
+    path: '/admin',
+    component: AdminLayout,
     meta: { requiresAuth: true, requiresAdmin: true },
-  }
+    children: [
+      { path: '', component: AdminView },
+      { path: 'sales', component: SalesView },
+    ],
+  },
+  {
+    path: '/admin/sales',
+    name: 'Sales',
+    component: SalesView,
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
 ];
 
 const router = createRouter({
@@ -64,9 +75,14 @@ router.beforeEach((to, from, next) => {
     return;
   }
 
-  // 已登入卻想去登入頁 → 直接到商品頁
+  // 已登入卻想去登入頁 → 根據角色導向
   if (to.path === '/login' && token) {
-    next('/products');
+    const role = localStorage.getItem('role');
+    if (role === 'ROLE_ADMIN') {
+      next('/admin');
+    } else {
+      next('/products');
+    }
     return;
   }
 

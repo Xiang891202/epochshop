@@ -44,40 +44,42 @@
         <button type="submit" class="btn-primary">
           {{ editingProduct ? '更新' : '新增' }}
         </button>
-        <button type="button" @click="resetForm" class="btn-secondary">重設</button>
+        <button type="button" @click="resetForm" class="btn-secondary">取消</button>
       </form>
     </div>
 
     <!-- 商品列表 -->
-    <table v-if="products.length > 0">
-      <thead>
-        <tr>
-          <th>商品</th>
-          <th>價格</th>
-          <th>庫存</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="product in products" :key="product.id">
-          <td>
-            <div class="admin-product-cell">
-              <img v-if="product.imageUrl" :src="product.imageUrl" class="admin-thumb" :alt="product.name" />
-              <div v-else class="admin-no-image">無圖</div>
-              <span>{{ product.name }}</span>
-            </div>
-          </td>
-          <td>${{ product.price }}</td>
-          <td>{{ product.stock }}</td>
-          <td>
-            <button @click="editProduct(product)" class="btn-edit">編輯</button>
-            <button v-if="product.active" @click="deactivateProduct(product.id)" class="btn-delete">下架</button>
-            <button v-else @click="reactivateProduct(product.id)" class="btn-restore">恢復上架</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <p v-else>尚無商品資料</p>
+    <div v-if="!showForm" class="product-form">
+      <table v-if="products.length > 0">
+        <thead>
+          <tr>
+            <th>商品</th>
+            <th>價格</th>
+            <th>庫存</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="product in products" :key="product.id">
+            <td>
+              <div class="admin-product-cell">
+                <img v-if="product.imageUrl" :src="product.imageUrl" class="admin-thumb" :alt="product.name" />
+                <div v-else class="admin-no-image">無圖</div>
+                <span>{{ product.name }}</span>
+              </div>
+            </td>
+            <td>${{ product.price }}</td>
+            <td>{{ product.stock }}</td>
+            <td>
+              <button @click="editProduct(product)" class="btn-edit">編輯</button>
+              <button v-if="product.active" @click="deactivateProduct(product.id)" class="btn-delete">下架</button>
+              <button v-else @click="reactivateProduct(product.id)" class="btn-restore">恢復上架</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-else>尚無商品資料</p>
+    </div>
   </div>
 </template>
 
@@ -145,6 +147,8 @@ const handleFileUpload = async (event: Event) => {
   if (!input.files || input.files.length === 0) return;
 
   const file = input.files[0];
+  if (!file) return; // ✅ 明確檢查 file 不是 undefined
+
   const formData = new FormData();
   formData.append('file', file);
 
