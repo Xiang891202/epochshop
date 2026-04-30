@@ -16,10 +16,9 @@ import com.example.epochshop.entity.User;
 import com.example.epochshop.repository.UserRepository;
 import com.example.epochshop.util.JwtUtil;
 
-import lombok.RequiredArgsConstructor;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -35,6 +34,7 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody Map<String, String> payload) {
         String username = payload.get("username");
         String password = payload.get("password");
+        String displayName = payload.getOrDefault("displayName", username); // 默认用 username
 
         if (userRepository.existsByUsername(username)) {
             return ResponseEntity.badRequest().body("Username already taken");
@@ -43,7 +43,8 @@ public class AuthController {
         User user = new User();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
-        user.setRole("ROLE_USER"); // 預設為買家
+        user.setRole("ROLE_USER");
+        user.setDisplayName(displayName);
         userRepository.save(user);
 
         String token = jwtUtil.generateToken(username, "ROLE_USER");
@@ -75,8 +76,10 @@ public class AuthController {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return ResponseEntity.ok(Map.of(
+            "id", user.getId(),
             "username", user.getUsername(),
-            "role", user.getRole()
+            "role", user.getRole(),
+            "displayName", user.getDisplayName() != null ? user.getDisplayName() : user.getUsername()
         ));
     }
 }

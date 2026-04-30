@@ -10,9 +10,13 @@ import com.example.epochshop.entity.Product;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    @Query("SELECT p FROM Product p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.seller WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Product> searchByName(@Param("keyword") String keyword, Pageable pageable);
 
-    @Query("SELECT p FROM Product p WHERE p.active = true")
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.seller WHERE p.active = true")
     Page<Product> findAllActive(Pageable pageable);
+
+    @Override
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.seller")
+    Page<Product> findAll(Pageable pageable);
 }

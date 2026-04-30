@@ -6,12 +6,14 @@
       <template v-if="!isAdmin">
         <router-link to="/cart" class="cart-link">🛒 購物車</router-link>
         <router-link to="/orders" class="orders-link">📋 我的訂單</router-link>
+        <router-link to="/messages" class="messages-link">💬 訊息</router-link>
       </template>
 
       <!-- 管理員導覽列 -->
       <template v-else>
         <router-link to="/admin" class="admin-link">⚙️ 管理</router-link>
         <router-link to="/admin/sales" class="sales-link">💰 銷售額</router-link>
+        <router-link to="/messages" class="messages-link">💬 訊息</router-link>
       </template>
 
       <button @click="logout" class="logout-btn">登出</button>
@@ -34,11 +36,13 @@
         <strong>{{ product.name }}</strong> - ${{ product.price }}
         <p>{{ product.description }}</p>
         <small>库存：{{ product.stock }}</small>
-        <div class="product-actions">
+        
+        <div class="product-actions" v-if="!isAdmin">
           <input type="number" v-model="quantities[product.id]" min="1" :max="product.stock" />
           <button @click="addToCart(product.id)" :disabled="adding[product.id]">
-            {{ adding[product.id] ? '加入中...' : '加入购物车' }}
+            {{ adding[product.id] ? '加入中...' : '加入購物車' }}
           </button>
+          <button @click="contactSeller(product.seller.id)" class="btn-contact">📩 聯絡賣家</button>
         </div>
       </div>
     </li>
@@ -66,6 +70,7 @@ interface Product {
   price: number;
   stock: number;
   imageUrl?: string;
+   seller: { id: number; username?: string; displayName?: string };  // 新增
 }
 
 const router = useRouter();
@@ -135,6 +140,10 @@ const addToCart = async (productId: number) => {
 const logout = () => {
   localStorage.removeItem('token');
   router.push('/login');
+};
+
+const contactSeller = (sellerId: number) => {
+  router.push({ path: '/messages', query: { userId: sellerId.toString() } });
 };
 
 onMounted(fetchProducts);

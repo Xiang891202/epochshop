@@ -6,6 +6,7 @@ import OrdersView from '../views/OrdersView.vue';
 import AdminView from '../views/AdminView.vue';
 import SalesView from '../views/SalesView.vue';
 import AdminLayout from '../views/layout/AdminLayout.vue';
+import ChatView from '@/views/ChatView.vue';
 // import { p } from 'vue-router/dist/router-CWoNjPRp.mjs';
 
 const routes = [
@@ -50,6 +51,12 @@ const routes = [
     name: 'Sales',
     component: SalesView,
     meta: { requiresAuth: true, requiresAdmin: true },
+  },
+  {
+    path: '/messages',
+    name: 'Chat',
+    component: ChatView,
+    meta: { requiresAuth: true },
   },
 ];
 

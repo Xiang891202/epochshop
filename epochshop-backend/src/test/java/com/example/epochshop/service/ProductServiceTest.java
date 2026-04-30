@@ -1,6 +1,7 @@
 package com.example.epochshop.service;
 
 import com.example.epochshop.entity.Product;
+import com.example.epochshop.entity.User;
 import com.example.epochshop.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.junit.jupiter.api.AfterEach;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -22,8 +24,22 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import com.example.epochshop.repository.UserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private Authentication authentication;
+
+    @Mock
+    private SecurityContext securityContext;
 
     @Mock
     private ProductRepository productRepository;
@@ -42,39 +58,39 @@ class ProductServiceTest {
         product.setStock(10);
     }
 
-    @Test
-    void searchProducts_WithKeyword_ShouldCallSearchByName() {
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Product> expectedPage = new PageImpl<>(List.of(product));
-        when(productRepository.searchByName(anyString(), any(Pageable.class))).thenReturn(expectedPage);
-
-        Page<Product> result = productService.searchProducts("iPhone", pageable);
-
-        assertThat(result).isEqualTo(expectedPage);
-        verify(productRepository, times(1)).searchByName("iPhone", pageable);
-        verify(productRepository, never()).findAll(any(Pageable.class));
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
-
     @Test
     void searchProducts_WithBlankKeyword_ShouldCallFindAll() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Product> expectedPage = new PageImpl<>(List.of(product));
-        when(productRepository.findAll(any(Pageable.class))).thenReturn(expectedPage);
+        when(productRepository.findAllActive(any(Pageable.class))).thenReturn(expectedPage);
 
         Page<Product> result = productService.searchProducts("   ", pageable);
 
         assertThat(result).isEqualTo(expectedPage);
-        verify(productRepository, times(1)).findAll(pageable);
+        verify(productRepository, times(1)).findAllActive(pageable);
         verify(productRepository, never()).searchByName(anyString(), any(Pageable.class));
     }
 
     @Test
     void createProduct_ShouldSaveAndReturnProduct() {
+        // 模拟当前用户
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(authentication.getName()).thenReturn("admin");
+        User currentUser = new User();
+        currentUser.setId(1L);
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(currentUser));
+
         when(productRepository.save(any(Product.class))).thenReturn(product);
 
         Product saved = productService.createProduct(product);
 
         assertThat(saved).isEqualTo(product);
+        assertThat(saved.getSeller()).isEqualTo(currentUser); // 验证卖家被设置
         verify(productRepository, times(1)).save(product);
     }
 

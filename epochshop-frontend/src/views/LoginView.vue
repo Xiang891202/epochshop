@@ -10,6 +10,11 @@
         <label>密碼</label>
         <input v-model="password" type="password" required />
       </div>
+      <!-- 註冊時才顯示名稱輸入 -->
+      <div v-if="!isLogin">
+        <label>名稱</label>
+        <input v-model="displayName" type="text" placeholder="您的顯示名稱" />
+      </div>
       <button type="submit">{{ isLogin ? '登入' : '註冊' }}</button>
       <button type="button" @click="isLogin = !isLogin">
         切換到{{ isLogin ? '註冊' : '登入' }}
@@ -27,23 +32,30 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 const username = ref('');
 const password = ref('');
+const displayName = ref('');
 const isLogin = ref(true);
 const error = ref('');
 
 const handleSubmit = async () => {
   const endpoint = isLogin.value ? '/auth/login' : '/auth/register';
   try {
-    const res = await axios.post(endpoint, {
+    const payload: any = {
       username: username.value,
       password: password.value,
-    });
+    };
+    // 注册时传递 displayName
+    if (!isLogin.value) {
+      payload.displayName = displayName.value || username.value;
+    }
+
+    const res = await axios.post(endpoint, payload);
     localStorage.setItem('token', res.data.token);
 
     // 取得角色
     const meRes = await axios.get('/auth/me');
     localStorage.setItem('role', meRes.data.role);
 
-    // 根據角色跳轉
+    // 根据角色跳转
     if (meRes.data.role === 'ROLE_ADMIN') {
       router.push('/admin');
     } else {

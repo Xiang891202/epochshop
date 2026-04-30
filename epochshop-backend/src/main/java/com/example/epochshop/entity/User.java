@@ -25,4 +25,7 @@ public class User {
     // 可擴充 email, role 等欄位
     @Column(nullable = false)
     private String role = "ROLE_USER"; 
+
+    @Column(name = "display_name")
+    private String displayName;   // ✅ 新增显示名称
 }
