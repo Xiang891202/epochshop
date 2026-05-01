@@ -1,6 +1,6 @@
 <template>
   <div class="products-container">
-    <h1>🛒 瞬購秒殺商城 - 商品列表</h1>
+    <h1>🛒 商品列表</h1>
     <div class="header-actions">
       <!-- 客戶端導覽列 -->
       <template v-if="!isAdmin">
@@ -30,7 +30,7 @@
       <li v-for="product in products" :key="product.id" class="product-item">
       <div class="product-image">
         <img v-if="product.imageUrl" :src="product.imageUrl" alt="商品图片" />
-        <div v-else class="no-image">暂无图片</div>
+        <div v-else class="no-image">暫無圖片</div>
       </div>
       <div class="product-info">
         <strong>{{ product.name }}</strong> - ${{ product.price }}
@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch, computed, inject} from 'vue';
 import axios from '../utils/axios';
 import { useRouter } from 'vue-router';
 import { debounce } from 'lodash-es';
@@ -86,6 +86,7 @@ const pageSize = 5;
 const totalPages = ref(0);
 
 const isAdmin = computed(() => localStorage.getItem('role') === 'ROLE_ADMIN');
+const toast = inject('toast') as (text: string, type?: string) => void;
 
 const fetchProducts = async () => {
   loading.value = true;
@@ -161,14 +162,14 @@ li { margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; l
 .pagination { display: flex; justify-content: center; gap: 20px; margin-top: 30px; }
 .pagination button { padding: 5px 15px; }
 
-.product-item {
+ .product-item {
   display: flex;
   gap: 20px;
   margin-bottom: 20px;
   border-bottom: 1px solid #ddd;
   padding-bottom: 20px;
   list-style: none;
-}
+} 
 
 .product-image {
   flex-shrink: 0;
@@ -212,5 +213,29 @@ li { margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; l
   background: #4CAF50;
   color: white;
   border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+  .product-item {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .product-image {
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+  }
+  .product-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .product-actions input {
+    width: 60px;
+  }
+  .header-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 }
 </style>

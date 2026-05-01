@@ -1,0 +1,114 @@
+/* ========== 全域變數與基礎設定 ========== */
+:root {
+  --primary-color: #4CAF50;
+  --primary-dark: #388E3C;
+  --danger-color: #f44336;
+  --info-color: #2196F3;
+  --warning-color: #FF9800;
+  --text-color: #333;
+  --bg-light: #f9f9f9;
+  --border-color: #ddd;
+  --breakpoint-md: 768px;
+  --breakpoint-sm: 480px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  color: var(--text-color);
+}
+
+/* ========== 通用按鈕樣式 ========== */
+.btn {
+  display: inline-block;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: background 0.2s, opacity 0.2s;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn-primary { background: var(--primary-color); color: white; }
+.btn-danger { background: var(--danger-color); color: white; }
+.btn-info { background: var(--info-color); color: white; }
+.btn-warning { background: var(--warning-color); color: white; }
+.btn-secondary { background: #ccc; color: #333; }
+
+/* ========== 通用表單元素 ========== */
+.form-group {
+  margin-bottom: 15px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+/* ========== 通用卡片與表格 ========== */
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  border: 1px solid var(--border-color);
+  padding: 10px;
+  text-align: left;
+}
+th {
+  background: #f2f2f2;
+  font-weight: 600;
+}
+
+/* ========== 導覽列輔助 ========== */
+.nav-link {
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  transition: background 0.2s;
+}
+.nav-link:hover {
+  background: #e0e0e0;
+}
+
+.back-link {
+  display: inline-block;
+  background-color: #f0f0f0;
+  padding: 5px 10px;
+  margin-bottom: 20px;
+}
+
+/* ========== 響應式輔助類別 ========== */
+.hide-on-mobile {
+  display: none;
+}
+@media (min-width: 768px) {
+  .hide-on-mobile {
+    display: initial;
+  }
+}

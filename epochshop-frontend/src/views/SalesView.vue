@@ -49,8 +49,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, inject } from 'vue';
 import axios from '../utils/axios';
+
+const toast = inject('toast') as (text: string, type?: string) => void;
 
 interface SalesData {
   totalSales: number;
@@ -73,6 +75,7 @@ onMounted(async () => {
     data.value = res.data;
   } catch (err: any) {
     error.value = err.response?.data || err.message;
+    toast('載入銷售數據失敗：' + error.value, 'error');
   } finally {
     loading.value = false;
   }

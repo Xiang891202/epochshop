@@ -5,12 +5,14 @@ import OrdersView from '../OrdersView.vue';
 import axios from '../../utils/axios';
 
 vi.mock('../../utils/axios');
-global.alert = vi.fn();
+// 移除 global.alert
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [{ path: '/orders', component: OrdersView }],
 });
+
+const toastMock = vi.fn();
 
 describe('OrdersView.vue', () => {
   let wrapper: any;
@@ -41,7 +43,7 @@ describe('OrdersView.vue', () => {
     });
 
     wrapper = mount(OrdersView, {
-      global: { plugins: [router] },
+      global: { plugins: [router], provide: { toast: toastMock } },
     });
 
     router.push('/orders');
@@ -66,16 +68,15 @@ describe('OrdersView.vue', () => {
     await flushPromises();
 
     expect(axios.put).toHaveBeenCalledWith('/orders/1/pay');
-    expect(global.alert).toHaveBeenCalledWith('付款成功！');
+    expect(toastMock).toHaveBeenCalledWith('付款成功！');   // ✅ 只验证一个参数
   });
 
   it('無訂單時應顯示提示文字', async () => {
-    // 重新掛載一個空資料的元件
     vi.clearAllMocks();
     (axios.get as any).mockResolvedValueOnce({ data: [] });
 
     const emptyWrapper = mount(OrdersView, {
-      global: { plugins: [router] },
+      global: { plugins: [router], provide: { toast: toastMock } },
     });
     await flushPromises();
     await emptyWrapper.vm.$nextTick();

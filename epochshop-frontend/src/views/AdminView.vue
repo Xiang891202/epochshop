@@ -84,8 +84,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, inject } from 'vue';
 import axios from '../utils/axios';
+
+const toast = inject('toast') as (text: string, type?: string) => void;
 
 interface Product {
   id: number;
@@ -116,8 +118,9 @@ const fetchProducts = async () => {
   try {
     const res = await axios.get('/products/admin', { params: { size: 100 } });
     products.value = res.data.content;
-  } catch (err) {
-    console.error('取得商品失敗', err);
+  } catch (err: any) {
+    // console.error('取得商品失敗', err);
+    toast('取得商品失敗' + err.message, 'error');
   }
 };
 
@@ -160,7 +163,7 @@ const handleFileUpload = async (event: Event) => {
     form.value.imageUrl = res.data.imageUrl;
     imagePreview.value = res.data.imageUrl;
   } catch (err: any) {
-    alert('圖片上傳失敗：' + (err.response?.data?.error || err.message));
+    toast('圖片上傳失敗：' + (err.response?.data?.error || err.message), 'error');
   } finally {
     uploading.value = false;
   }
@@ -179,11 +182,11 @@ const handleSubmit = async () => {
     } else {
       await axios.post('/products', form.value);
     }
-    alert('操作成功');
+    toast('操作成功', 'success');
     resetForm();
     fetchProducts();
   } catch (err: any) {
-    alert('操作失敗：' + (err.response?.data || err.message));
+    toast('操作失敗：' + (err.response?.data || err.message), 'error');
   }
 };
 
@@ -191,20 +194,20 @@ const deactivateProduct = async (id: number) => {
   if (!confirm('確定要下架此商品嗎？')) return;
   try {
     await axios.put(`/products/${id}/deactivate`);
-    alert('下架成功');
+    toast('下架成功', 'success');
     fetchProducts();
   } catch (err: any) {
-    alert('操作失敗：' + (err.response?.data || err.message));
+    toast('操作失敗：' + (err.response?.data || err.message), 'error');
   }
 };
 
 const reactivateProduct = async (id: number) => {
   try {
     await axios.put(`/products/${id}/reactivate`);
-    alert('恢復成功');
+    toast('恢復成功', 'success');
     fetchProducts();
   } catch (err: any) {
-    alert('操作失敗：' + (err.response?.data || err.message));
+    toast('操作失敗：' + (err.response?.data || err.message), 'error');
   }
 };
 
@@ -235,4 +238,20 @@ th { background: #f2f2f2; }
 .image-upload { margin-top: 5px; }
 .preview-container { margin-top: 10px; display: flex; align-items: center; gap: 10px; }
 .image-preview { width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
+
+@media (max-width: 768px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+  .admin-sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 10px;
+  }
+  .admin-sidebar h3 {
+    display: none;
+  }
+}
 </style>

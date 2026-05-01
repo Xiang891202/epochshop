@@ -13,18 +13,26 @@ vi.mock('vue-router', async () => {
   };
 });
 
-const mockRoute = {
-  query: {},
-};
+// 模拟 matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })),
+});
 
+const mockRoute = { query: {} };
 (useRoute as any).mockReturnValue(mockRoute);
 
 const router = createRouter({
   history: createWebHistory(),
-  routes: [
-    { path: '/messages', component: ChatView },
-  ],
+  routes: [{ path: '/messages', component: ChatView }],
 });
+
+const toastMock = vi.fn();
 
 describe('ChatView.vue', () => {
   let wrapper: any;
@@ -50,6 +58,7 @@ describe('ChatView.vue', () => {
     wrapper = mount(ChatView, {
       global: {
         plugins: [router],
+        provide: { toast: toastMock },
       },
     });
 
@@ -59,6 +68,7 @@ describe('ChatView.vue', () => {
     await flushPromises();
   });
 
+  // 所有测试保持不变，无需修改
   it('應顯示對話列表', () => {
     expect(wrapper.text()).toContain('管理员');
     expect(wrapper.text()).toContain('你好');
@@ -71,9 +81,7 @@ describe('ChatView.vue', () => {
   });
 
   it('點擊對話應載入歷史訊息', async () => {
-    // Mock 标记已读
     (axios.put as any).mockResolvedValueOnce({});
-    // Mock 历史消息
     (axios.get as any).mockResolvedValueOnce({
       data: [
         {
@@ -93,25 +101,21 @@ describe('ChatView.vue', () => {
 
     expect(axios.put).toHaveBeenCalledWith('/messages/conversation/2/read');
     expect(axios.get).toHaveBeenCalledWith('/messages/conversation/2');
-    // 历史消息应显示
     expect(wrapper.text()).toContain('在吗');
   });
 
   it('發送訊息應正確呼叫 API', async () => {
-    // 先打开对话
     (axios.put as any).mockResolvedValueOnce({});
     (axios.get as any).mockResolvedValueOnce({ data: [] });
     const convItem = wrapper.find('.conv-item');
     await convItem.trigger('click');
     await flushPromises();
 
-    // 输入并发送
     const input = wrapper.find('.message-input input');
     await input.setValue('新消息');
     (axios.post as any).mockResolvedValueOnce({
       data: { id: 2, content: '新消息' },
     });
-    // 发送后会自动重新加载对话，需要 mock 重新调用的 get/put
     (axios.put as any).mockResolvedValueOnce({});
     (axios.get as any).mockResolvedValueOnce({ data: [] });
 
@@ -126,7 +130,6 @@ describe('ChatView.vue', () => {
   });
 
   it('無對話時應顯示提示', async () => {
-    // 重新挂载一个空列表的组件
     vi.clearAllMocks();
     (axios.get as any).mockResolvedValueOnce({
       data: { id: 1, username: 'testuser', role: 'ROLE_USER' },
@@ -134,7 +137,7 @@ describe('ChatView.vue', () => {
     (axios.get as any).mockResolvedValueOnce({ data: [] });
 
     const emptyWrapper = mount(ChatView, {
-      global: { plugins: [router] },
+      global: { plugins: [router], provide: { toast: toastMock } },
     });
     await flushPromises();
     expect(emptyWrapper.text()).toContain('尚無對話');

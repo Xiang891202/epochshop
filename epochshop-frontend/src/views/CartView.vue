@@ -49,9 +49,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, inject } from 'vue';
 import axios from '../utils/axios';
 import router from '@/router';
+
+const toast = inject('toast') as (text: string, type?: string) => void;
 
 interface CartItem {
   itemId: number;
@@ -89,7 +91,7 @@ const updateItem = async (item: CartItem) => {
     const res = await axios.put(`/cart/items/${item.itemId}?quantity=${item.quantity}`);
     cart.value = res.data;
   } catch (err: any) {
-    alert('更新失敗：' + err.message);
+    toast('更新失敗：' + err.message, 'error');
     fetchCart(); // 復原
   }
 };
@@ -100,31 +102,31 @@ const removeItem = async (itemId: number) => {
     const res = await axios.delete(`/cart/items/${itemId}`);
     cart.value = res.data;
   } catch (err: any) {
-    alert('刪除失敗：' + err.message);
+    toast('刪除失敗：' + err.message, 'error');
   }
 };
 
 const checkout = async () => {
-  console.log('開始結帳');
+  // console.log('開始結帳');
   if (checkingOut.value) return; //防止重複訂單
   checkingOut.value = true;
   try {
     // 1. 取得冪等 Token
     const tokenRes = await axios.get('/orders/idempotent-token');
     const idempotentKey = tokenRes.data.token;
-    console.log('取得 Token:', idempotentKey);
+    // console.log('取得 Token:', idempotentKey);
 
 
     // 2. 送出結帳請求
-    console.log('準備送出 POST /orders');
+    // console.log('準備送出 POST /orders');
     const res = await axios.post('/orders', { idempotentKey: idempotentKey });
-    console.log('訂單建立成功', res.data);
-    alert('訂單建立成功！訂單編號：' + res.data.orderId);
+    // console.log('訂單建立成功', res.data);
+    toast('訂單建立成功！訂單編號：' + res.data.orderId, 'success');
     router.push('/orders');
   } catch (err: any) {
-    console.error('結帳失敗:', err);
+    // console.error('結帳失敗:', err);
     const message = err.response?.data || err.message || '結帳失敗';
-    alert('結帳失敗：' + message);
+    toast('結帳失敗：' + message, 'error');
   } finally {
     checkingOut.value = false;
   }
@@ -139,10 +141,7 @@ onMounted(fetchCart);
   margin: 0 auto;
   padding: 20px;
 }
-.back-link {
-  display: inline-block;
-  margin-bottom: 20px;
-}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -174,5 +173,16 @@ input[type="number"] {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+}
+
+ @media (max-width: 768px) {
+  .cart-container table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .checkout-section {
+    text-align: center;
+  }
 }
 </style>

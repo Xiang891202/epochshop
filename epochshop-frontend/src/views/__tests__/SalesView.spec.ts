@@ -11,6 +11,8 @@ const router = createRouter({
   routes: [{ path: '/admin/sales', component: SalesView }],
 });
 
+const toastMock = vi.fn();
+
 describe('SalesView.vue', () => {
   let wrapper: any;
 
@@ -28,7 +30,7 @@ describe('SalesView.vue', () => {
     });
 
     wrapper = mount(SalesView, {
-      global: { plugins: [router] },
+      global: { plugins: [router], provide: { toast: toastMock } },
     });
 
     await router.push('/admin/sales');
@@ -74,7 +76,7 @@ describe('SalesView.vue', () => {
     });
 
     const emptyWrapper = mount(SalesView, {
-      global: { plugins: [router] },
+      global: { plugins: [router], provide: { toast: toastMock } },
     });
     await flushPromises();
     await emptyWrapper.vm.$nextTick();
@@ -87,7 +89,7 @@ describe('SalesView.vue', () => {
     (axios.get as any).mockRejectedValueOnce(new Error('網路錯誤'));
 
     const errorWrapper = mount(SalesView, {
-      global: { plugins: [router] },
+      global: { plugins: [router], provide: { toast: toastMock }  },
     });
     await flushPromises();
     await errorWrapper.vm.$nextTick();

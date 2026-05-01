@@ -1,6 +1,7 @@
 <template>
   <div class="orders-container">
     <h1>📦 我的訂單</h1>
+    <router-link to="/products" class="back-link">← 繼續購物</router-link>
     <div v-if="loading">載入中...</div>
     <div v-else-if="error">發生錯誤：{{ error }}</div>
     <div v-else>
@@ -28,8 +29,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, inject } from 'vue';
 import axios from '../utils/axios';
+
+const toast = inject('toast') as (text: string, type?: string) => void;
 
 interface OrderItem {
   productId: number;
@@ -65,10 +68,10 @@ const fetchOrders = async () => {
 const payOrder = async (orderId: number) => {
   try {
     await axios.put(`/orders/${orderId}/pay`);
-    alert('付款成功！');
+    toast('付款成功！');
     fetchOrders();  // 刷新
   } catch (err: any) {
-    alert('付款失敗：' + err.message);
+    toast('付款失敗：' + err.message, 'error');
   }
 };
 
@@ -102,5 +105,16 @@ onMounted(fetchOrders);
   border: none;
   border-radius: 4px;
   cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .order-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  .orders-container {
+    padding: 10px;
+  }
 }
 </style>

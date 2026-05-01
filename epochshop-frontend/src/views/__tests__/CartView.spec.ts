@@ -6,7 +6,6 @@ import ProductsView from '../ProductsView.vue';
 import axios from '../../utils/axios';
 
 vi.mock('../../utils/axios');
-global.alert = vi.fn();
 
 const router = createRouter({
   history: createWebHistory(),
@@ -16,6 +15,8 @@ const router = createRouter({
     { path: '/orders', component: { template: '<div>Orders</div>' } },
   ],
 });
+
+const toastMock = vi.fn();
 
 describe('CartView.vue', () => {
   let wrapper: any;
@@ -42,6 +43,7 @@ describe('CartView.vue', () => {
     wrapper = mount(CartView, {
       global: {
         plugins: [router],
+        provide: { toast: toastMock },
       },
     });
 
@@ -56,19 +58,18 @@ describe('CartView.vue', () => {
     expect(wrapper.text()).toContain('$59800');
   });
 
-  it('點擊結帳按鈕應該發送 POST 請求並導向訂單頁', async () => {
+  it('點擊結帳按鈕應該發送 POST 請求', async () => {
     (axios.get as any).mockResolvedValueOnce({ data: { token: 'test-token' } });
     (axios.post as any).mockResolvedValueOnce({ data: { orderId: 123 } });
 
     const checkoutBtn = wrapper.find('.checkout-btn');
     await checkoutBtn.trigger('click');
-
-    // 等待请求完成
     await flushPromises();
     await wrapper.vm.$nextTick();
 
     expect(axios.get).toHaveBeenCalledWith('/orders/idempotent-token');
     expect(axios.post).toHaveBeenCalledWith('/orders', { idempotentKey: 'test-token' });
-    // 路由断言暂时移除
-    });
+    // 成功时 toast 会被调用，可加上断言
+    // expect(toastMock).toHaveBeenCalledWith('訂單建立成功！', 'success');
+  });
 });
