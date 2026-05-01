@@ -46,6 +46,8 @@ text
 | ⚙️ 管理後台 | 管理員可新增、編輯、下架（軟刪除）商品，圖片上傳 | Vue AdminView + @PreAuthorize + 商品 active 欄位 |
 | 💰 銷售額儀表板 | 管理員可查看總銷售額、已付款訂單數、商品銷售排行 | Spring Data JPA 聚合查詢 + Vue 數據視覺化 |
 | 💬 聊天系統 | 客戶與賣家即時對話，動態聯絡人、未讀計數、角色過濾 | Vue ChatView + Spring Data JPA + ConversationDTO |
+| 📱 RWD 響應式 | 全站適配手機、平板，導覽列與對話視窗自動切換 | CSS Media Queries + Vue 動態顯示控制 |
+| 🔔 Toast 通知 | 全域操作提示，取代原生 alert，提升使用者體驗 | Vue 3 provide/inject + CSS 動畫 |
 | 🎨 前端整合 | Vue 3 + TypeScript + Axios | 路由守衛、Token 自動附加、錯誤攔截、Loading 防連點、分頁搜尋 |
 
 ## ⚙️ 技術棧
@@ -108,14 +110,13 @@ GET	/api/messages/conversation/{otherUserId}	獲取與某用戶的對話記錄
 PUT	/api/messages/conversation/{otherUserId}/read	標記對話已讀
 PUT	/api/messages/{id}/read	標記單條訊息已讀
 GET	/api/messages/unread-count	獲取未讀訊息數
-
 🧪 單元測試
-後端測試（19 個）./mvnw test
+後端測試（19 個） ./mvnw test
 ProductServiceTest（5）、OrderServiceTest（4）、ImageUploadControllerTest（2）
 
-AdminControllerTest（2）、ChatServiceTest（5）、ApplicationTest（1）
+AdminControllerTest（2）、ChatServiceTest（5）、EpochshopApplicationTests（1）
 
-前端測試（23 個）npm run test
+前端測試（23 個） npm run test
 AdminView.spec.ts（7）、CartView.spec.ts（2）、OrdersView.spec.ts（3）
 
 SalesView.spec.ts（6）、ChatView.spec.ts（5）
@@ -125,18 +126,25 @@ SalesView.spec.ts（6）、ChatView.spec.ts（5）
 📈 效能優化案例：訂單列表查詢
 問題描述
 查詢特定用戶的訂單及其明細時，由於 order_items 表缺少對 order_id 的索引，導致查詢時產生全表掃描，當資料量增長時效能將急遽下降。
+
 優化前執行計畫（EXPLAIN）
 order_items 表：type=ALL（全表掃描），rows=12
+
 orders 表：type=eq_ref，使用 PRIMARY 索引
+
 優化方法
 為 orders.user_id 及 order_items.order_id 建立索引：
+
 sql
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 優化後執行計畫（EXPLAIN）
 order_items 表：type=ALL（因資料量過小，優化器未選用索引）
+
 possible_keys 已顯示 idx_order_items_order_id
+
 掃描行數變化不大（12 → 11），但在生產環境資料量大時，該索引將顯著降低查詢成本。
+
 結論
 本次優化雖在極小資料集下未見立即效能提升，但建立了正確的索引策略，為未來資料增長做好準備。實際生產環境中，該索引可將查詢時間從數秒降低至毫秒級。
 
@@ -174,6 +182,8 @@ v0.12.1：商品關聯賣家、動態「聯絡賣家」按鈕
 v0.12.2：聊天系統前後端單元測試（後端 +5，前端 +5）
 
 v0.12.3：修復所有測試，前後端共 42 個測試
+
+v0.13.0：前端 UI 增強、RWD 響應式設計、Toast 全域通知
 
 📝 待辦事項
 ✅ 賣家 UI 介面（編輯、新增、軟刪除）
