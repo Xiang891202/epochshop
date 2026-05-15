@@ -46,11 +46,11 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/auth/**",
-                    "/api/images/**",          // ← 图片访问，不需要认证
+                    "/api/images/**",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html",
-                    "/uploads/**"              // ← 静态图片目录，不需要认证
+                    "/uploads/**"
                 ).permitAll()
                 .anyRequest().authenticated()
             )
@@ -63,11 +63,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // 从环境变量读取前端域名，如果没有则使用开发环境默认值
+        // 从环境变量读取允许的前端域名，默认为本地开发地址
         String allowedOrigin = System.getenv("ALLOWED_ORIGIN");
         if (allowedOrigin == null || allowedOrigin.isBlank()) {
-            // 开发环境默认允许本地前端和占位符（可移除占位符）
-            configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+            configuration.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));
         } else {
             configuration.setAllowedOrigins(Collections.singletonList(allowedOrigin));
         }
