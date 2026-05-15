@@ -62,14 +62,20 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(
-            "https://你的前端域名.vercel.app",
-            "http://localhost:5173"
-        ));
+        
+        // 从环境变量读取前端域名，如果没有则使用开发环境默认值
+        String allowedOrigin = System.getenv("ALLOWED_ORIGIN");
+        if (allowedOrigin == null || allowedOrigin.isBlank()) {
+            // 开发环境默认允许本地前端和占位符（可移除占位符）
+            configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        } else {
+            configuration.setAllowedOrigins(Collections.singletonList(allowedOrigin));
+        }
+        
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
-
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
