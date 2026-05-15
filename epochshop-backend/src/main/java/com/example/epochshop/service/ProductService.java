@@ -45,6 +45,12 @@ public class ProductService {
         return productRepository.searchByName(keyword, pageable);
     }
 
+    @Transactional(readOnly = true)
+    public Product getProductById(Long id) {
+        return productRepository.findByIdWithSeller(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+    }
+
     @Transactional
     public Product createProduct(Product product) {
         product.setSeller(getCurrentUser());

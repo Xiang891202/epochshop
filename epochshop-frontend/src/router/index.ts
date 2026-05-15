@@ -7,6 +7,7 @@ import AdminView from '../views/AdminView.vue';
 import SalesView from '../views/SalesView.vue';
 import AdminLayout from '../views/layout/AdminLayout.vue';
 import ChatView from '@/views/ChatView.vue';
+import ProductDetail from '../views/ProductDetail.vue';
 // import { p } from 'vue-router/dist/router-CWoNjPRp.mjs';
 
 const routes = [
@@ -44,20 +45,27 @@ const routes = [
     children: [
       { path: '', component: AdminView },
       { path: 'sales', component: SalesView },
+      { path: 'messages', component: ChatView, meta: { requiresAuth: true, requiresAdmin: true } },  // ← 新增
     ],
   },
-  {
-    path: '/admin/sales',
-    name: 'Sales',
-    component: SalesView,
-    meta: { requiresAuth: true, requiresAdmin: true },
-  },
+  // {
+  //   path: '/admin/sales',
+  //   name: 'Sales',
+  //   component: SalesView,
+  //   meta: { requiresAuth: true, requiresAdmin: true },
+  // },
   {
     path: '/messages',
     name: 'Chat',
     component: ChatView,
     meta: { requiresAuth: true },
   },
+  {
+    path: '/products/:id',
+    name: 'ProductDetail',
+    component: ProductDetail,
+    meta: { requiresAuth: true },
+  }
 ];
 
 const router = createRouter({

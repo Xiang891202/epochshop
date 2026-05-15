@@ -8,37 +8,68 @@
       <div v-if="cart.items.length === 0">
         <p>購物車是空的，快去選購商品吧！</p>
       </div>
-      <table v-else>
-        <thead>
-          <tr>
-            <th>商品名稱</th>
-            <th>單價</th>
-            <th>數量</th>
-            <th>小計</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in cart.items" :key="item.itemId">
-            <td>{{ item.productName }}</td>
-            <td>${{ item.unitPrice }}</td>
-            <td>
+
+      <!-- 桌面版：表格 -->
+      <div class="cart-desktop">
+        <table v-if="cart.items.length > 0">
+          <thead>
+            <tr>
+              <th>商品名稱</th>
+              <th>單價</th>
+              <th>數量</th>
+              <th>小計</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in cart.items" :key="item.itemId">
+              <td>{{ item.productName }}</td>
+              <td>${{ item.unitPrice }}</td>
+              <td>
+                <input type="number" v-model="item.quantity" min="1" @change="updateItem(item)" />
+               </td>
+              <td>${{ item.subtotal }}</td>
+              <td>
+                <button @click="removeItem(item.itemId)">刪除</button>
+               </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" align="right"><strong>總計</strong></td>
+              <td><strong>${{ cart.totalAmount }}</strong></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- 行動版：卡片列表 -->
+      <div class="cart-mobile">
+        <div v-for="item in cart.items" :key="item.itemId" class="cart-card">
+          <div class="cart-card-header">{{ item.productName }}</div>
+          <div class="cart-card-body">
+            <div class="cart-card-row">
+              <span class="label">單價</span>
+              <span class="value">${{ item.unitPrice }}</span>
+            </div>
+            <div class="cart-card-row">
+              <span class="label">數量</span>
               <input type="number" v-model="item.quantity" min="1" @change="updateItem(item)" />
-            </td>
-            <td>${{ item.subtotal }}</td>
-            <td>
-              <button @click="removeItem(item.itemId)">刪除</button>
-            </td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="3" align="right"><strong>總計</strong></td>
-            <td><strong>${{ cart.totalAmount }}</strong></td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
+            </div>
+            <div class="cart-card-row">
+              <span class="label">小計</span>
+              <span class="value">${{ item.subtotal }}</span>
+            </div>
+            <button class="btn-remove" @click="removeItem(item.itemId)">刪除</button>
+          </div>
+        </div>
+        <div v-if="cart.items.length > 0" class="mobile-total">
+          <div class="total-label">總計</div>
+          <div class="total-amount">${{ cart.totalAmount }}</div>
+        </div>
+      </div>
+
       <div class="checkout-section" v-if="cart.items.length > 0">
         <button class="checkout-btn" @click="checkout">
           {{ checkingOut ? '處理中...' : '結帳' }}
@@ -107,24 +138,15 @@ const removeItem = async (itemId: number) => {
 };
 
 const checkout = async () => {
-  // console.log('開始結帳');
-  if (checkingOut.value) return; //防止重複訂單
+  if (checkingOut.value) return;
   checkingOut.value = true;
   try {
-    // 1. 取得冪等 Token
     const tokenRes = await axios.get('/orders/idempotent-token');
     const idempotentKey = tokenRes.data.token;
-    // console.log('取得 Token:', idempotentKey);
-
-
-    // 2. 送出結帳請求
-    // console.log('準備送出 POST /orders');
-    const res = await axios.post('/orders', { idempotentKey: idempotentKey });
-    // console.log('訂單建立成功', res.data);
+    const res = await axios.post('/orders', { idempotentKey });
     toast('訂單建立成功！訂單編號：' + res.data.orderId, 'success');
     router.push('/orders');
   } catch (err: any) {
-    // console.error('結帳失敗:', err);
     const message = err.response?.data || err.message || '結帳失敗';
     toast('結帳失敗：' + message, 'error');
   } finally {
@@ -142,6 +164,13 @@ onMounted(fetchCart);
   padding: 20px;
 }
 
+/* 桌面版表格样式 */
+.cart-desktop {
+  display: block;
+}
+.cart-mobile {
+  display: none;
+}
 table {
   width: 100%;
   border-collapse: collapse;
@@ -158,9 +187,92 @@ tfoot td {
   font-weight: bold;
 }
 input[type="number"] {
-  width: 60px;
+  width: 70px;
+  padding: 6px;
 }
 
+/* 行動版卡片样式 */
+@media (max-width: 768px) {
+  .cart-desktop {
+    display: none;
+  }
+  .cart-mobile {
+    display: block;
+  }
+
+  .cart-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .cart-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .cart-card-header {
+    background: #f9f9f9;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+  .cart-card-body {
+    padding: 12px 16px;
+  }
+  .cart-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .cart-card-row .label {
+    color: #666;
+    font-size: 0.9rem;
+  }
+  .cart-card-row .value {
+    font-weight: 500;
+  }
+  .cart-card-row input {
+    width: 70px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    text-align: center;
+  }
+  .btn-remove {
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    width: 100%;
+    margin-top: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-remove:hover {
+    background: #d32f2f;
+  }
+  .mobile-total {
+    background: #f9f9f9;
+    padding: 16px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-top: 8px;
+    margin-bottom: 20px;
+  }
+  .total-amount {
+    color: #f44336;
+  }
+}
+
+/* 结账区域 */
 .checkout-section {
   margin-top: 20px;
   text-align: right;
@@ -173,16 +285,21 @@ input[type="number"] {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  transition: background 0.2s;
+}
+.checkout-btn:hover {
+  background-color: #45a049;
 }
 
- @media (max-width: 768px) {
-  .cart-container table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
+/* 小屏幕时结账按钮居中 */
+@media (max-width: 768px) {
   .checkout-section {
     text-align: center;
+  }
+  .checkout-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 1rem;
   }
 }
 </style>

@@ -71,4 +71,10 @@ public class ProductController {
             @PageableDefault(size = 20, sort = "id") Pageable pageable) {
         return productService.searchAllProducts(keyword, pageable);
     }
+
+    @Operation(summary = "取得單一商品詳細資訊")
+    @GetMapping("/{id}")
+    public Product getProductById(@PathVariable Long id) {
+        return productService.getProductById(id);
+    }
 }

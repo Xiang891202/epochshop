@@ -1,18 +1,20 @@
 package com.example.epochshop.service;
 
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.epochshop.dto.ConversationDTO;
 import com.example.epochshop.entity.ChatMessage;
 import com.example.epochshop.entity.User;
 import com.example.epochshop.repository.ChatMessageRepository;
 import com.example.epochshop.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -51,22 +53,16 @@ public class ChatService {
     public List<ConversationDTO> getConversationList() {
         User currentUser = getCurrentUser();
         List<ChatMessage> lastMessages = chatMessageRepo.findLastMessagesByUser(currentUser.getId());
-        
-        // 根据角色过滤对方用户
-        boolean isAdmin = currentUser.getRole().equals("ROLE_ADMIN");
-        lastMessages = lastMessages.stream().filter(msg -> {
-            User other = msg.getSender().getId().equals(currentUser.getId()) ? msg.getReceiver() : msg.getSender();
-            if (isAdmin) {
-                return other.getRole().equals("ROLE_USER"); // 管理员只显示买家
-            } else {
-                return other.getRole().equals("ROLE_ADMIN"); // 买家只显示管理员
-            }
-        }).collect(Collectors.toList());
+
+        // 移除角色過濾，讓買家可以看到所有與他對話的人（包括其他賣家或會員）
+        // 如果仍想排除自己，可加入：.filter(msg -> !msg.getSender().getId().equals(msg.getReceiver().getId()))
 
         List<ConversationDTO> list = new ArrayList<>();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MM/dd HH:mm");
         for (ChatMessage msg : lastMessages) {
             User other = msg.getSender().getId().equals(currentUser.getId()) ? msg.getReceiver() : msg.getSender();
+            // 排除自己發給自己的對話
+            if (other.getId().equals(currentUser.getId())) continue;
             long unread = chatMessageRepo.countUnreadFromSender(currentUser, other);
             ConversationDTO dto = new ConversationDTO();
             dto.setOtherUserId(other.getId());

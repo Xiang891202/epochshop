@@ -8,6 +8,8 @@ import org.springframework.data.repository.query.Param;
 
 import com.example.epochshop.entity.Product;
 
+import java.util.Optional;   // ✅ 添加这行
+
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p LEFT JOIN FETCH p.seller WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
@@ -19,4 +21,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Override
     @Query("SELECT p FROM Product p LEFT JOIN FETCH p.seller")
     Page<Product> findAll(Pageable pageable);
+
+    @Query("SELECT p FROM Product p JOIN FETCH p.seller WHERE p.id = :id")
+    Optional<Product> findByIdWithSeller(@Param("id") Long id);
 }

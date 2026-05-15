@@ -359,4 +359,26 @@ h2 {
     flex: 1;
   }
 }
+
+.chat-container {
+  height: 100dvh;  /* 使用动态视口高度 */
+  position: relative;
+}
+.message-input {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 10px;
+  border-top: 1px solid #ddd;
+}
+
+.chat-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 10px 15px;
+  height: calc(100vh - 60px);  /* 根据实际头部高度调整 */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 </style>
