@@ -1,0 +1,48 @@
+name: API Health Check
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    # 每6小时运行一次（UTC时间）
+    - cron: '0 */6 * * *'
+  workflow_dispatch:   # 允许手动触发
+
+jobs:
+  test-api:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test Login API (public endpoint)
+        run: |
+          echo "Testing login API..."
+          curl -X POST https://epochshop.onrender.com/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"username":"testuser","password":"123456"}' \
+            -f \
+            -o /dev/null \
+            -w "HTTP Status: %{http_code}\n"
+          echo "✅ Login API responded successfully."
+
+      - name: Test Public API (product list) - no auth
+        run: |
+          echo "Testing products list API..."
+          curl -X GET https://epochshop.onrender.com/api/products?page=0&size=1 \
+            -f \
+            -o /dev/null \
+            -w "HTTP Status: %{http_code}\n"
+          echo "✅ Products API is accessible."
+
+      - name: Test Swagger UI endpoint
+        run: |
+          echo "Testing Swagger UI..."
+          curl -f -s -o /dev/null -w "HTTP Status: %{http_code}\n" https://epochshop.onrender.com/swagger-ui.html
+          echo "✅ Swagger UI is reachable."
+
+      - name: Notify on failure (optional)
+        if: failure()
+        run: |
+          echo "❌ One or more API tests failed!"
