@@ -14,23 +14,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Test Login API
+      - name: Test Login API and get token
+        id: login
         run: |
           echo "Testing login API..."
-          curl -X POST https://epochshop.onrender.com/api/auth/login \
+          RESPONSE=$(curl -s -X POST https://epochshop.onrender.com/api/auth/login \
             -H "Content-Type: application/json" \
-            -d '{"username":"testuser","password":"123456"}' \
-            -f -s -o /dev/null -w "HTTP Status: %{http_code}\n"
-          echo "✅ Login API responded successfully."
+            -d '{"username":"testuser","password":"123456"}')
+          TOKEN=$(echo $RESPONSE | jq -r '.token')
+          if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
+            echo "Login failed or token missing"
+            exit 1
+          fi
+          echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+          echo "✅ Login successful, token obtained."
 
-      - name: Test Public API (product list)
+      - name: Test Protected API (product list) with token
         run: |
-          echo "Testing products list API..."
+          echo "Testing products list API with token..."
           curl -f -s -o /dev/null -w "HTTP Status: %{http_code}\n" \
+            -H "Authorization: Bearer ${{ env.TOKEN }}" \
             "https://epochshop.onrender.com/api/products?page=0&size=1"
-          echo "✅ Products API is accessible."
+          echo "✅ Products API is accessible with authentication."
 
-      - name: Test Swagger UI endpoint
+      - name: Test Swagger UI endpoint (public)
         run: |
           echo "Testing Swagger UI..."
           curl -f -s -o /dev/null -w "HTTP Status: %{http_code}\n" \
