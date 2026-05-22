@@ -1,0 +1,184 @@
+<template>
+  <div class="backend-check-overlay">
+    <div class="check-card">
+      <h2>🛒 EpochShop</h2>
+      <div v-if="checking" class="status">
+        <div class="spinner"></div>
+        <p>後端啟動中，請稍候...</p>
+        <p class="attempt-info">自動重試次數：{{ currentAttempt }}/{{ maxRetries }}</p>
+        <p class="countdown" v-if="countdown > 0">{{ countdown }} 秒後重新嘗試</p>
+      </div>
+      <div v-else class="error">
+        <p class="error-msg">{{ errorMessage }}</p>
+        <p class="attempt-info">已嘗試 {{ currentAttempt }}/{{ maxRetries }}</p>
+        <button @click="startCheck" class="retry-btn">立即重試</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount } from 'vue';
+import axios from '../utils/axios';
+
+const emit = defineEmits(['ready']);
+
+const maxRetries = 3;
+const currentAttempt = ref(0);      // 已尝试次数（0表示还未开始，1表示第一次尝试）
+const countdown = ref(10);          // 当前倒计时秒数
+const checking = ref(true);         // true: 正在检查中， false: 检查结束（失败）
+const errorMessage = ref('');
+
+let timer: number | null = null;
+let countdownInterval: number | null = null;
+
+// 健康检查函数
+const checkBackend = async () => {
+  try {
+    const res = await axios.get('/health');
+    if (res.status === 200 && res.data?.status === 'UP') {
+      // 成功，通知父组件
+      emit('ready');
+      return true;
+    } else {
+      // 响应码200但数据不对，视为接口异常
+      throw new Error('UNEXPECTED_RESPONSE');
+    }
+  } catch (err: any) {
+    // 网络错误（后端未启动）或其他错误
+    if (err.message === 'UNEXPECTED_RESPONSE') {
+      throw new Error('UNEXPECTED_RESPONSE');
+    }
+    // 其他错误（如Network Error）
+    throw new Error('BACKEND_DOWN');
+  }
+};
+
+// 启动一轮检测
+const startRound = async () => {
+  currentAttempt.value++;
+  countdown.value = 10;
+
+  try {
+    await checkBackend();
+    // 成功则已emit('ready')，无需继续
+  } catch (err: any) {
+    if (currentAttempt.value >= maxRetries) {
+      // 最终失败
+      checking.value = false;
+      if (err.message === 'BACKEND_DOWN') {
+        errorMessage.value = '後端尚未啟動，請稍後再嘗試';
+      } else {
+        errorMessage.value = '前端與後端接口異常，請稍後再嘗試';
+      }
+      // 停止倒计时
+      stopTimers();
+    } else {
+      // 还有重试机会，开始倒计时10秒后自动重试
+      startCountdown();
+    }
+  }
+};
+
+// 倒计时开始
+const startCountdown = () => {
+  stopTimers(); // 清除之前的定时器
+  countdown.value = 10;
+  countdownInterval = window.setInterval(() => {
+    countdown.value--;
+    if (countdown.value <= 0) {
+      clearInterval(countdownInterval!);
+      countdownInterval = null;
+      // 倒计时结束，发起下一轮
+      startRound();
+    }
+  }, 1000);
+};
+
+// 停止所有定时器
+const stopTimers = () => {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+};
+
+// 从父组件调用重新开始
+const startCheck = () => {
+  currentAttempt.value = 0;
+  checking.value = true;
+  errorMessage.value = '';
+  stopTimers();
+  startRound();
+};
+
+onMounted(() => {
+  startRound();
+});
+
+onBeforeUnmount(() => {
+  stopTimers();
+});
+
+// 暴露方法以便父组件可调用
+defineExpose({ startCheck });
+</script>
+
+<style scoped>
+.backend-check-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.check-card {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  max-width: 400px;
+  width: 80%;
+}
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.attempt-info {
+  margin-top: 10px;
+  color: #666;
+  font-size: 0.9rem;
+}
+.countdown {
+  margin-top: 8px;
+  font-weight: bold;
+  color: #333;
+}
+.error-msg {
+  color: #e74c3c;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+.retry-btn {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 20px;
+}
+</style>

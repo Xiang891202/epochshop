@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -37,6 +38,10 @@ public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
 
+    // 从环境变量或配置文件中读取允许的前端域名，默认值为本地开发地址
+    @Value("${ALLOWED_ORIGIN:http://localhost:5173}")
+    private String allowedOrigin;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -46,6 +51,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/auth/**",
+                    "/api/health",               // 健康檢查端點
                     "/api/images/**",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
@@ -62,19 +68,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        // 从环境变量读取允许的前端域名，默认为本地开发地址
-        String allowedOrigin = System.getenv("ALLOWED_ORIGIN");
-        if (allowedOrigin == null || allowedOrigin.isBlank()) {
-            configuration.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));
-        } else {
-            configuration.setAllowedOrigins(Collections.singletonList(allowedOrigin));
-        }
-        
+        configuration.setAllowedOrigins(Collections.singletonList(allowedOrigin));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
