@@ -61,27 +61,28 @@ const checkBackend = async () => {
   }
 };
 
-// 启动一轮检测
+// 啟動一輪檢測
 const startRound = async () => {
+  // ⚡ 優化：不要在這裡重設 countdown.value = 10，讓倒數的控制權完全交給 startCountdown
   currentAttempt.value++;
-  countdown.value = 10;
 
   try {
-    await checkBackend();
-    // 成功则已emit('ready')，无需继续
+    const success = await checkBackend();
+    if (success) {
+      emit('ready'); // 成功則觸發 ready，通知父組件關閉 Overlay
+    }
   } catch (err: any) {
     if (currentAttempt.value >= maxRetries) {
-      // 最终失败
+      // 最終失敗
       checking.value = false;
       if (err.message === 'BACKEND_DOWN') {
         errorMessage.value = '後端尚未啟動，請稍後再嘗試';
       } else {
         errorMessage.value = '前端與後端接口異常，請稍後再嘗試';
       }
-      // 停止倒计时
       stopTimers();
     } else {
-      // 还有重试机会，开始倒计时10秒后自动重试
+      // 還有重試機會，這時才乾乾淨淨地開始倒數 10 秒
       startCountdown();
     }
   }
@@ -90,13 +91,21 @@ const startRound = async () => {
 // 倒计时开始
 const startCountdown = () => {
   stopTimers(); // 清除之前的定时器
-  countdown.value = 10;
+  
+  // ⚡ 核心修復：在倒數開始的這一秒，把秒數固定重設為 10
+  countdown.value = 10; 
+  
   countdownInterval = window.setInterval(() => {
-    countdown.value--;
+    if (countdown.value > 0) {
+      countdown.value--;
+    }
+    
+    // ⚡ 核心修復：等數字真正扣到 0 的時候，才去啟動下一輪 API，完美避開 JavaScript 執行緒卡頓
     if (countdown.value <= 0) {
       clearInterval(countdownInterval!);
       countdownInterval = null;
-      // 倒计时结束，发起下一轮
+      
+      // 倒計時完全結束，清空了執行緒，才發起下一輪
       startRound();
     }
   }, 1000);
@@ -108,7 +117,13 @@ const stopTimers = () => {
     clearInterval(countdownInterval);
     countdownInterval = null;
   }
+  // ⚡ 優化：停止計時器時，主動把可能還在卡頓的 API 請求直接強行斷開
+  if (abortController) {
+    abortController.abort();
+    abortController = null;
+  }
 };
+
 
 // 从父组件调用重新开始
 const startCheck = () => {
