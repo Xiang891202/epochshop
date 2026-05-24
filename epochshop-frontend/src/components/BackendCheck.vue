@@ -31,26 +31,33 @@ const errorMessage = ref('');
 
 let timer: number | null = null;
 let countdownInterval: number | null = null;
+let abortController: AbortController | null = null;
 
 // 健康检查函数
 const checkBackend = async () => {
+  // 中斷上一次請求
+  if (abortController) {
+    abortController.abort();
+  }
+  abortController = new AbortController();
+
   try {
-    const res = await axios.get('/health');
+    const res = await axios.get('/health', {
+      timeout: 5000,               // 5 秒超時
+      signal: abortController.signal,
+    });
     if (res.status === 200 && res.data?.status === 'UP') {
-      // 成功，通知父组件
-      emit('ready');
       return true;
     } else {
-      // 响应码200但数据不对，视为接口异常
       throw new Error('UNEXPECTED_RESPONSE');
     }
   } catch (err: any) {
-    // 网络错误（后端未启动）或其他错误
-    if (err.message === 'UNEXPECTED_RESPONSE') {
-      throw new Error('UNEXPECTED_RESPONSE');
+    if (err.code === 'ECONNABORTED') {
+      throw new Error('TIMEOUT');   // 超時視同後端未啟動
     }
-    // 其他错误（如Network Error）
-    throw new Error('BACKEND_DOWN');
+    throw err;
+  } finally {
+    abortController = null;
   }
 };
 
